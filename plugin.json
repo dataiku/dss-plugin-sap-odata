@@ -1,0 +1,16 @@
+{
+    "id": "sharepoint",
+    "version": "1.0.0",
+    "meta": {
+        "label": "SharePoint",
+        "description": "Read and write data from/to your SharePoint account",
+        "author": "Dataiku (Alex Bourret)",
+        "icon": "icon-cloud",
+        "tags": [
+            "Connector",
+            "Cloud"
+        ],
+        "url": "https://www.dataiku.com/dss/plugins/info/sharepoint.html",
+        "licenseInfo": "Apache Software License"
+    }
+}

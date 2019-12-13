@@ -1,0 +1,15 @@
+{
+    "meta": {
+        "label": "SharePoint",
+        "description": "Read and write data from/to your SharePoint account",
+        "icon": "icon-cloud"
+    },
+    "params": [
+        {
+            "name": "sharepoint_sharepy",
+            "label": "SharePoint login",
+            "type": "PRESET",
+            "parameterSetId": "sharepoint-login"
+        }
+    ]
+}
