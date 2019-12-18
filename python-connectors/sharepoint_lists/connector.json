@@ -1,0 +1,24 @@
+{
+    "meta": {
+        "label": "Lists",
+        "description": "",
+        "icon": "icon-cloud"
+    },
+    "readable": true,
+    "writable": false,
+    "params": [
+        {
+            "name": "sharepoint_sharepy",
+            "label": "SharePoint login",
+            "type": "PRESET",
+            "parameterSetId": "sharepoint-login"
+        },
+        {
+            "name": "sharepoint_list_title",
+            "label": "List title",
+            "description": "",
+            "type": "STRING",
+            "mandatory": true
+        }
+    ]
+}

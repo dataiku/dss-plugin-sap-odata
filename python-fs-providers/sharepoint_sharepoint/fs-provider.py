@@ -11,7 +11,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
-                    format='onedrive plugin %(levelname)s - %(message)s')
+                    format='sharepoint plugin %(levelname)s - %(message)s')
 
 # based on https://docs.microsoft.com/fr-fr/sharepoint/dev/sp-add-ins/working-with-folders-and-files-with-rest
 
@@ -190,12 +190,12 @@ class SharePointFSProvider(FSProvider):
             return False
 
     def get_folders(self, path):
-        return self.client.get(self.get_path_url(path) + "/Folders" ).json()
+        return self.client.get(self.get_sharepoint_item_url(path) + "/Folders" ).json()
 
     def get_files(self, path):
-        return self.client.get(self.get_path_url(path) + "/Files" ).json()
+        return self.client.get(self.get_sharepoint_item_url(path) + "/Files" ).json()
 
-    def get_path_url(self, path):
+    def get_sharepoint_item_url(self, path):
         URL_STRUCTURE = "https://{}.sharepoint.com/sites/{}/_api/Web/GetFolderByServerRelativePath(decodedurl='/sites/dssplugin/Shared%20Documents{}')"
         if path == '/':
             path = ""
@@ -381,6 +381,8 @@ class SharePointFSProvider(FSProvider):
         )
         bio = BytesIO(response.content)
         shutil.copyfileobj(bio, stream)
+        # Reading lists:
+        # https://{}.sharepoint.com/sites/{}/_api/Web/lists/GetByTitle('AlexTestList')/Items
 
     def write(self, path, stream):
         """
