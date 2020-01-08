@@ -2,6 +2,8 @@ from six.moves import xrange
 from dataiku.connector import Connector
 import sharepy, logging
 
+from sharepoint_client import SharePointClient
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
                     format='sharepoint plugin %(levelname)s - %(message)s')
@@ -25,17 +27,30 @@ class SharePointListsConnector(Connector):
         object 'plugin_config' to the constructor
         """
         Connector.__init__(self, config, plugin_config)  # pass the parameters to the base class
-
-        # perform some more initialization
-        self.sharepoint_tenant = plugin_config.get('sharepoint_sharepy')['sharepoint_tenant']
-        self.sharepoint_site = plugin_config.get('sharepoint_sharepy')['sharepoint_site']
-        username = plugin_config.get('sharepoint_sharepy')['sharepoint_username']
-        password = plugin_config.get('sharepoint_sharepy')['sharepoint_password']
         self.sharepoint_list_title = self.config.get("sharepoint_list_title")
-        logger.info('init:sharepoint_list_title={}'.format(self.sharepoint_list_title))
-        self.sharepoint_url = self.sharepoint_tenant + ".sharepoint.com"
+        self.auth_type = config.get('auth_type')
+        logger.info('init:sharepoint_list_title={}, auth_type={}'.format(self.sharepoint_list_title, self.auth_type))
         self.columns={}
-        self.client = sharepy.connect(self.sharepoint_url, username=username, password=password)
+
+        if self.auth_type == "oauth":
+            self.sharepoint_tenant = config.get('sharepoint_oauth')['sharepoint_tenant']
+            self.sharepoint_site = config.get('sharepoint_oauth')['sharepoint_site']
+            self.sharepoint_access_token = config.get('sharepoint_oauth')['sharepoint_oauth']
+            self.client = SharePointClient(
+                None,
+                None,
+                self.sharepoint_tenant,
+                self.sharepoint_site,
+                list_title = None,
+                sharepoint_access_token = self.sharepoint_access_token
+            )
+        else:
+            username = config.get('sharepoint_sharepy')['sharepoint_username']
+            password = config.get('sharepoint_sharepy')['sharepoint_password']
+            self.sharepoint_tenant = config.get('sharepoint_sharepy')['sharepoint_tenant']
+            self.sharepoint_site = config.get('sharepoint_sharepy')['sharepoint_site']
+            self.sharepoint_url = self.sharepoint_tenant + ".sharepoint.com"
+            self.client = sharepy.connect(self.sharepoint_url, username=username, password=password)
 
     def get_read_schema(self):
         """
@@ -56,11 +71,7 @@ class SharePointListsConnector(Connector):
 
         Supported types are: string, int, bigint, float, double, date, boolean
         """
-
-        # In this example, we don't specify a schema here, so DSS will infer the schema
-        # from the columns actually returned by the generate_rows method
-        #response.json()['d']['results'][0]['Hidden']
-        logger.info('get_read_schema')
+        logger.info('get_read_schema tenant={}, site={}, list_title={}'.format(self.sharepoint_tenant, self.sharepoint_site, self.sharepoint_list_title))
         LIST_DETAILS_URL = "https://{}.sharepoint.com/sites/{}/_api/Web/lists/GetByTitle('{}')/fields"
         response = self.client.get(
             LIST_DETAILS_URL.format(
@@ -75,15 +86,30 @@ class SharePointListsConnector(Connector):
         self.columns={}
         for column in response["d"]["results"]:
             if column['Hidden'] == False and column['ReadOnlyField']==False:
-                columns.append({
-                    "name": column["Title"],
-                    "type": self.get_dss_types(column["TypeAsString"])
-                })
-                self.columns[column["Title"]] = self.get_dss_types(column["TypeAsString"])
+                sharepoint_type = self.get_dss_types(column["TypeAsString"])
+                if sharepoint_type is not None:
+                    columns.append({
+                        "name": column["Title"],
+                        "type": self.get_dss_types(column["TypeAsString"])
+                    })
+                    self.columns[column["Title"]] = sharepoint_type
         return {"columns":columns}
 
     def get_dss_types(self, sharepoint_type):
-        return "string"
+        SHAREPOINT_TYPES = {
+            "Text" : "string",
+            "Number" : "string",
+            "DateTime" : "date",
+            "Boolean" : "string",
+            "URL" : "object",
+            "Location" : "object",
+            "Computed" : None,
+            "Attachments" : None
+        }
+        if sharepoint_type in SHAREPOINT_TYPES:
+            return SHAREPOINT_TYPES[sharepoint_type]
+        else:
+            return "string"
 
     def generate_rows(self, dataset_schema=None, dataset_partitioning=None,
                             partition_id=None, records_limit = -1):
@@ -108,7 +134,6 @@ class SharePointListsConnector(Connector):
         ).json()
 
         if "d" not in response or "results" not in response["d"]:
-            print('ALX:response1={}'.format(response))
             if "error" in response and "message" in response["error"] and "value" in response["error"]["message"]:
                 raise Exception ("Error: {}".format(response["error"]["message"]["value"]))
             else:
@@ -123,20 +148,6 @@ class SharePointListsConnector(Connector):
             if key in self.columns:
                 ret[key] = value
         return ret
-
-    def get_list_type(self, list_name):
-        # returns ListItemEntityTypeFullName
-        # from https://ikuiku.sharepoint.com/sites/dssplugin/_api/Web/lists/GetByTitle('AlexTestList')
-        LIST_DETAILS_URL = "https://{}.sharepoint.com/sites/{}/_api/Web/lists/GetByTitle('{}')"
-        response = self.client.get(
-            LIST_DETAILS_URL.format(
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                list_name
-            )
-        )
-
-        return
 
     def get_writer(self, dataset_schema=None, dataset_partitioning=None,
                          partition_id=None):
@@ -154,12 +165,14 @@ class SharePointListsConnector(Connector):
         """
         Return the partitioning schema that the connector defines.
         """
+        logger.info('get_partitioning')
         raise Exception("Unimplemented")
 
 
     def list_partitions(self, partitioning):
         """Return the list of partitions for the partitioning scheme
         passed as parameter"""
+        logger.info('list_partitions:partitioning={}'.format(partitioning))
         return []
 
 
@@ -169,6 +182,7 @@ class SharePointListsConnector(Connector):
         Implementation is only required if the corresponding flag is set to True
         in the connector definition
         """
+        logger.info('partition_exists:partitioning={}, partition_id={}'.format(partitioning, partition_id))
         raise Exception("unimplemented")
 
 
@@ -179,10 +193,14 @@ class SharePointListsConnector(Connector):
         Implementation is only required if the corresponding flag is set to True
         in the connector definition
         """
+        logger.info('get_records_count:partitioning={}, partition_id={}'.format(partitioning, partition_id))
         raise Exception("unimplemented")
 
 
 class SharePointListWriter(object):
+
+    APPLICATION_JSON = "application/json;odata=verbose"
+
     def __init__(self, config, parent, dataset_schema, dataset_partitioning, partition_id):
         self.parent = parent
         self.config = config
@@ -204,7 +222,7 @@ class SharePointListWriter(object):
     def create_list(self, list_name):
         SHAREPOINT_LIST_CREATE_URL = "https://{}.sharepoint.com/sites/{}/_api/Web/lists"
         headers={
-            "content-type": "application/json;odata=verbose",
+            "content-type": self.APPLICATION_JSON,
             'Accept': 'application/json; odata=nometadata'
         }
         data = {
@@ -233,12 +251,8 @@ class SharePointListWriter(object):
         for column in self.columns:
             if column['name'] not in self.parent.columns:
                 self.create_custom_field(column["name"])
-        data = {}
         headers = {
-            "Content-Type": "application/json;odata=verbose"#,
-            #"X-RequestDigest": $("#__REQUESTDIGEST").val(), // <-- digest
-            #"X-HTTP-Method": "MERGE",
-            #"IF-MATCH": "*"
+            "Content-Type": self.APPLICATION_JSON
         }
         counter = 0
         for row in self.buffer:
@@ -266,7 +280,7 @@ class SharePointListWriter(object):
             }
         }
         headers = {
-            "content-type": "application/json;odata=verbose"
+            "content-type": self.APPLICATION_JSON
         }
         response = self.parent.client.post(
             SHAREPOINT_LIST_ADD_CUSTOM_FIELD.format(
@@ -281,7 +295,7 @@ class SharePointListWriter(object):
     def build_row_dicttionary(self, row):
         ret = {}
         for column, structure in zip(row, self.columns):
-            ret[structure["name"]] = column
+            ret[structure["name"].replace(" ", "_x0020_")] = column
         return ret
 
     def close(self):

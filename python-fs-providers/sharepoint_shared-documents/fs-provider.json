@@ -1,11 +1,9 @@
 {
     "meta": {
-        "label": "Lists",
-        "description": "",
+        "label": "Shared Documents",
+        "description": "Read and write data from/to your SharePoint account",
         "icon": "icon-cloud"
     },
-    "readable": true,
-    "writable": false,
     "params": [
         {
             "name": "auth_type",
@@ -35,13 +33,6 @@
             "type": "PRESET",
             "parameterSetId": "sharepoint-login",
             "visibilityCondition": "model.auth_type == 'login'"
-        },
-        {
-            "name": "sharepoint_list_title",
-            "label": "List title",
-            "description": "",
-            "type": "STRING",
-            "mandatory": true
         }
     ]
 }

@@ -6,7 +6,8 @@
     },
     "defaultDefinableInline": true,
     "defaultDefinableAtProjectLevel": true,
-    "pluginParams": [
+    "pluginParams": [],
+    "params": [
         {
             "name": "sharepoint_tenant",
             "label": "Tenant",
