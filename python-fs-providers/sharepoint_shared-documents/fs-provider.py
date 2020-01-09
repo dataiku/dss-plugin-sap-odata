@@ -3,7 +3,7 @@ from dataiku.fsprovider import FSProvider
 import os, shutil, requests, sharepy, logging
 
 from datetime import datetime
-from sharepoint_client import SharePointClient
+from sharepoint_client import SharePointSession, SharePointClient
 try:
     from BytesIO import BytesIO ## for Python 2
 except ImportError:
@@ -28,25 +28,7 @@ class SharePointFSProvider(FSProvider):
         self.provider_root = "/"
         logger.info('init:root={}'.format(self.root))
 
-        if config.get('auth_type') == "oauth":
-            self.sharepoint_tenant = config.get('sharepoint_oauth')['sharepoint_tenant']
-            self.sharepoint_site = config.get('sharepoint_oauth')['sharepoint_site']
-            self.sharepoint_access_token = config.get('sharepoint_oauth')['sharepoint_oauth']
-            self.client = SharePointClient(
-                None,
-                None,
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                list_title = None,
-                sharepoint_access_token = self.sharepoint_access_token
-            )
-        else:
-            username = config.get('sharepoint_sharepy')['sharepoint_username']
-            password = config.get('sharepoint_sharepy')['sharepoint_password']
-            self.sharepoint_tenant = config.get('sharepoint_sharepy')['sharepoint_tenant']
-            self.sharepoint_site = config.get('sharepoint_sharepy')['sharepoint_site']
-            self.sharepoint_url = self.sharepoint_tenant + ".sharepoint.com"
-            self.client = sharepy.connect(self.sharepoint_url, username=username, password=password)
+        self.client = SharePointClient(config)
 
     # util methods
     def get_rel_path(self, path):
@@ -77,8 +59,8 @@ class SharePointFSProvider(FSProvider):
         """
         full_path = self.get_lnt_path(self.get_full_path(path))
         logger.info('stat:path="{}", full_path="{}"'.format(path, full_path))
-        files = self.get_files(full_path)
-        folders = self.get_folders(full_path)
+        files = self.client.get_files(full_path)
+        folders = self.client.get_folders(full_path)
 
         if self.has_sharepoint_items(files) or self.has_sharepoint_items(folders):
             return {
@@ -89,8 +71,8 @@ class SharePointFSProvider(FSProvider):
             }
 
         path_to_item, item_name = os.path.split(full_path)
-        files = self.get_files(path_to_item)
-        folders = self.get_folders(path_to_item)
+        files = self.client.get_files(path_to_item)
+        folders = self.client.get_folders(path_to_item)
 
         file = self.extract_item_from(item_name, files)
         folder = self.extract_item_from(item_name, folders)
@@ -134,8 +116,8 @@ class SharePointFSProvider(FSProvider):
 
         logger.info('browse:path="{}", full_path="{}"'.format(path, full_path))
 
-        folders = self.get_folders(full_path)
-        files = self.get_files(full_path)
+        folders = self.client.get_folders(full_path)
+        files = self.client.get_files(full_path)
         children = []
 
         for file in self.loop_sharepoint_items(files):
@@ -164,7 +146,7 @@ class SharePointFSProvider(FSProvider):
             }
         path_to_file, file_name = os.path.split(full_path)
 
-        files = self.get_files(path_to_file)
+        files = self.client.get_files(path_to_file)
 
         for file in self.loop_sharepoint_items(files):
             if self.get_name(file) == file_name:
@@ -176,7 +158,7 @@ class SharePointFSProvider(FSProvider):
                 }
 
         parent_path, item_name = os.path.split(full_path)
-        folders = self.get_folders(parent_path)
+        folders = self.client.get_folders(parent_path)
         folder = self.extract_item_from(item_name, folders)
         if folder is None:
             ret = {'fullPath' : None, 'exists' : False}
@@ -197,18 +179,6 @@ class SharePointFSProvider(FSProvider):
             return True
         else:
             return False
-
-    def get_folders(self, path):
-        return self.client.get(self.get_sharepoint_item_url(path) + "/Folders" ).json()
-
-    def get_files(self, path):
-        return self.client.get(self.get_sharepoint_item_url(path) + "/Files" ).json()
-
-    def get_sharepoint_item_url(self, path):
-        URL_STRUCTURE = "https://{}.sharepoint.com/sites/{}/_api/Web/GetFolderByServerRelativePath(decodedurl='/sites/dssplugin/Shared%20Documents{}')"
-        if path == '/':
-            path = ""
-        return URL_STRUCTURE.format(self.sharepoint_tenant, self.sharepoint_site, path)
 
     def get_last_modified(self, item):
         if 'TimeLastModified' in item:
@@ -252,7 +222,7 @@ class SharePointFSProvider(FSProvider):
 
     def list_recursive(self, path, full_path, first_non_empty):
         paths = []
-        folders = self.get_folders(full_path)
+        folders = self.client.get_folders(full_path)
         for folder in self.loop_sharepoint_items(folders):
             paths.extend(
                 self.list_recursive(
@@ -261,7 +231,7 @@ class SharePointFSProvider(FSProvider):
                     first_non_empty
                 )
             )
-        files = self.get_files(full_path)
+        files = self.client.get_files(full_path)
         for file in self.loop_sharepoint_items(files):
             paths.append({
                 'path':self.get_lnt_path(os.path.join(path, self.get_name(file))),
@@ -280,8 +250,8 @@ class SharePointFSProvider(FSProvider):
         logger.info('delete_recursive:path={},fullpath={}'.format(path, full_path))
         self.assert_path_is_not_root(full_path)
         path_to_item, item_name = os.path.split(full_path)
-        files = self.get_files(path_to_item)
-        folders = self.get_folders(path_to_item)
+        files = self.client.get_files(path_to_item)
+        folders = self.client.get_folders(path_to_item)
         file = self.extract_item_from(item_name, files)
         folder = self.extract_item_from(item_name, folders)
 
@@ -289,42 +259,14 @@ class SharePointFSProvider(FSProvider):
             raise Exception("Ambiguous naming with file / folder {}".format(item_name))
 
         if file is not None:
-            self.delete_file(full_path)
+            self.client.delete_file(self.get_lnt_path(full_path))
             return 1
 
         if folder is not None:
-            self.delete_folder(full_path)
+            self.client.delete_folder(self.get_lnt_path(full_path))
             return 1
 
         return 0
-
-    def delete_file(self, full_path):
-        FILE_DELETE_URL = "https://{}.sharepoint.com/sites/{}/_api/web/GetFileByServerRelativeUrl('/sites/dssplugin/Shared%20Documents{}')"
-        headers = {
-            "X-HTTP-Method":"DELETE"
-        }
-        response = self.client.post(
-            FILE_DELETE_URL.format(
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                self.get_lnt_path(full_path)
-            ),
-            headers = headers
-        )
-
-    def delete_folder(self, full_path):
-        FOLDER_DELETE_URL = "https://{}.sharepoint.com/sites/{}/_api/web/GetFolderByServerRelativeUrl('/sites/dssplugin/Shared%20Documents{}')"
-        headers = {
-            "X-HTTP-Method":"DELETE"
-        }
-        response = self.client.post(
-            FOLDER_DELETE_URL.format(
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                self.get_lnt_path(full_path)
-            ),
-            headers = headers
-        )
 
     def get_name(self, item):
         if "Name" in item:
@@ -339,15 +281,8 @@ class SharePointFSProvider(FSProvider):
         full_from_path = self.get_full_path(from_path)
         full_to_path = self.get_full_path(to_path)
         logger.info('move:from={},to={}'.format(full_from_path, full_to_path))
-        ITEM_MOVE_URL = "https://{}.sharepoint.com/sites/{}/_api/web/getfilebyserverrelativeurl('/sites/dssplugin//Shared Documents{}')/moveto(newurl='/sites/dssplugin/Shared Documents{}',flags=1)"
 
-        response = self.client.post(ITEM_MOVE_URL.format(
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                full_from_path,
-                full_to_path
-            )
-        ).json()
+        response = self.client.move_file(full_from_path, full_to_path)
         return "d" in response and "MoveTo" in response["d"]
 
     def read(self, path, stream, limit):
@@ -356,13 +291,8 @@ class SharePointFSProvider(FSProvider):
         """
         full_path = self.get_full_path(path)
         logger.info('read:full_path={}'.format(full_path))
-        response = self.client.get(
-            "https://{}.sharepoint.com/sites/{}/_api/Web/GetFileByServerRelativePath(decodedurl='/sites/dssplugin/Shared%20Documents{}')/$value".format(
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                full_path
-            )
-        )
+
+        response = self.client.get_file_content(full_path)
         bio = BytesIO(response.content)
         shutil.copyfileobj(bio, stream)
 
@@ -371,26 +301,13 @@ class SharePointFSProvider(FSProvider):
         Write the stream to the object denoted by path into the stream
         """
         full_path = self.get_full_path(path)
-        full_path_parent, file_name = os.path.split(full_path)
-        logger.info('write:path="{}", full_path="{}", full_path_parent="{}"'.format(path, full_path, full_path_parent))
+        logger.info('write:path="{}", full_path="{}"'.format(path, full_path))
         bio = BytesIO()
         shutil.copyfileobj(stream, bio)
         bio.seek(0)
         data = bio.read()
         self.create_path(full_path)
-        headers = {
-            "Content-Length": "{}".format(len(data))
-        }
-        response = self.client.post(
-            "https://{}.sharepoint.com/sites/{}/_api/Web/GetFolderByServerRelativePath(decodedurl='/sites/dssplugin/Shared%20Documents{}')/Files/add(url='{}',overwrite=true)".format(
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                full_path_parent,
-                file_name
-            ),
-            headers=headers,
-            data=data
-        )
+        response = self.client.write_file_content(full_path, data)
         logger.info("write:response={}".format(response))
 
     def create_path(self, file_full_path):
@@ -399,24 +316,7 @@ class SharePointFSProvider(FSProvider):
         path = ""
         for token in tokens:
             path = self.get_lnt_path(path + "/" + token)
-            self.create_folder(path)
-
-    def create_folder(self, full_path):
-        json = {
-            '__metadata': {
-                'type': 'SP.Folder'
-            },
-            'ServerRelativeUrl': full_path
-        }
-
-        response = self.client.post(
-            "https://{}.sharepoint.com/sites/{}/_api/Web/Folders/add('Shared%20Documents/{}')".format(
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                full_path
-            )
-        )
-        return response
+            self.client.create_folder(path)
 
     def assert_path_is_not_root(self, path):
         if path is None:

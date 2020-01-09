@@ -2,7 +2,7 @@ from six.moves import xrange
 from dataiku.connector import Connector
 import sharepy, logging
 
-from sharepoint_client import SharePointClient
+from sharepoint_client import SharePointClient, SharePointSession
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
@@ -31,26 +31,7 @@ class SharePointListsConnector(Connector):
         self.auth_type = config.get('auth_type')
         logger.info('init:sharepoint_list_title={}, auth_type={}'.format(self.sharepoint_list_title, self.auth_type))
         self.columns={}
-
-        if self.auth_type == "oauth":
-            self.sharepoint_tenant = config.get('sharepoint_oauth')['sharepoint_tenant']
-            self.sharepoint_site = config.get('sharepoint_oauth')['sharepoint_site']
-            self.sharepoint_access_token = config.get('sharepoint_oauth')['sharepoint_oauth']
-            self.client = SharePointClient(
-                None,
-                None,
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                list_title = None,
-                sharepoint_access_token = self.sharepoint_access_token
-            )
-        else:
-            username = config.get('sharepoint_sharepy')['sharepoint_username']
-            password = config.get('sharepoint_sharepy')['sharepoint_password']
-            self.sharepoint_tenant = config.get('sharepoint_sharepy')['sharepoint_tenant']
-            self.sharepoint_site = config.get('sharepoint_sharepy')['sharepoint_site']
-            self.sharepoint_url = self.sharepoint_tenant + ".sharepoint.com"
-            self.client = sharepy.connect(self.sharepoint_url, username=username, password=password)
+        self.client = SharePointClient(config)
 
     def get_read_schema(self):
         """
@@ -71,15 +52,9 @@ class SharePointListsConnector(Connector):
 
         Supported types are: string, int, bigint, float, double, date, boolean
         """
-        logger.info('get_read_schema tenant={}, site={}, list_title={}'.format(self.sharepoint_tenant, self.sharepoint_site, self.sharepoint_list_title))
-        LIST_DETAILS_URL = "https://{}.sharepoint.com/sites/{}/_api/Web/lists/GetByTitle('{}')/fields"
-        response = self.client.get(
-            LIST_DETAILS_URL.format(
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                self.sharepoint_list_title
-            )
-        ).json()
+
+        logger.info('get_read_schema ')
+        response = self.client.get_list_fields(self.sharepoint_list_title)
         if "d" not in response or "results" not in response["d"] or len(response["d"]["results"]) < 1:
             return None
         columns = []
@@ -125,13 +100,8 @@ class SharePointListsConnector(Connector):
             self.get_read_schema()
 
         logger.info('generate_row:dataset_schema={}, dataset_partitioning={}, partition_id={}'.format(dataset_schema, dataset_partitioning, partition_id))
-        response = self.client.get(
-            "https://{}.sharepoint.com/sites/{}/_api/Web/lists/GetByTitle('{}')/Items".format(
-                self.sharepoint_tenant,
-                self.sharepoint_site,
-                self.sharepoint_list_title
-            )
-        ).json()
+
+        response = self.client.get_list_all_items(self.sharepoint_list_title)
 
         if "d" not in response or "results" not in response["d"]:
             if "error" in response and "message" in response["error"] and "value" in response["error"]["message"]:
@@ -218,79 +188,19 @@ class SharePointListWriter(object):
         """
         logger.info('write_row:row={}'.format(row))
         self.buffer.append(row)
-    
-    def create_list(self, list_name):
-        SHAREPOINT_LIST_CREATE_URL = "https://{}.sharepoint.com/sites/{}/_api/Web/lists"
-        headers={
-            "content-type": self.APPLICATION_JSON,
-            'Accept': 'application/json; odata=nometadata'
-        }
-        data = {
-            '__metadata': {
-                'type': 'SP.List'
-            },
-            'AllowContentTypes': True,
-            'BaseTemplate': 100,
-            'ContentTypesEnabled': True,
-            'Title': list_name
-        }
-        response = self.parent.client.post(
-            SHAREPOINT_LIST_CREATE_URL.format(
-                self.parent.sharepoint_tenant, 
-                self.parent.sharepoint_site#,
-                #list_name,
-            ),
-            headers=headers,
-            json=data
-        )
 
     def flush(self):
-        SHAREPOINT_LIST_ADD_ITEM_URL = "https://{}.sharepoint.com/sites/{}/_api/Web/lists/getbytitle('{}')/items"
-        self.create_list(self.parent.sharepoint_list_title)
+        self.parent.client.delete_list(self.parent.sharepoint_list_title)
+        self.parent.client.create_list(self.parent.sharepoint_list_title)
+
         self.parent.get_read_schema()
         for column in self.columns:
             if column['name'] not in self.parent.columns:
-                self.create_custom_field(column["name"])
-        headers = {
-            "Content-Type": self.APPLICATION_JSON
-        }
-        counter = 0
+                self.parent.client.create_custom_field(self.parent.sharepoint_list_title, column["name"])
+
         for row in self.buffer:
             item = self.build_row_dicttionary(row)
-            item["__metadata"] = {
-                "type" : "SP.Data.{}ListItem".format(self.parent.sharepoint_list_title.capitalize())
-            }
-            response = self.parent.client.post(
-                SHAREPOINT_LIST_ADD_ITEM_URL.format(
-                    self.parent.sharepoint_tenant,
-                    self.parent.sharepoint_site,
-                    self.parent.sharepoint_list_title
-                ),
-                json=item,
-                headers=headers
-            )
-            counter = counter + 1
-
-    def create_custom_field(self, field_title):
-        SHAREPOINT_LIST_ADD_CUSTOM_FIELD = "https://{0}.sharepoint.com/sites/{1}/_api/web/GetList(@a1)/Fields/CreateFieldAsXml?@a1='/sites/{1}/Lists/{2}'"
-        body = {
-            'parameters' : {
-                '__metadata': { 'type': 'SP.XmlSchemaFieldCreationInformation' },
-                'SchemaXml':"<Field DisplayName='{0}' Format='Dropdown' MaxLength='255' Name='{0}' Title='{0}' Type='Text'></Field>".format(field_title)
-            }
-        }
-        headers = {
-            "content-type": self.APPLICATION_JSON
-        }
-        response = self.parent.client.post(
-            SHAREPOINT_LIST_ADD_CUSTOM_FIELD.format(
-                self.parent.sharepoint_tenant,
-                self.parent.sharepoint_site,
-                self.parent.sharepoint_list_title
-            ),
-            headers = headers,
-            json=body
-        )
+            response = self.parent.client.add_list_item(self.parent.sharepoint_list_title, item)
 
     def build_row_dicttionary(self, row):
         ret = {}
