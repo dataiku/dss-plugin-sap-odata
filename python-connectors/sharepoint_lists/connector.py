@@ -102,7 +102,6 @@ class SharePointListsConnector(Connector):
         logger.info('generate_row:dataset_schema={}, dataset_partitioning={}, partition_id={}'.format(dataset_schema, dataset_partitioning, partition_id))
 
         response = self.client.get_list_all_items(self.sharepoint_list_title)
-
         if "d" not in response or "results" not in response["d"]:
             if "error" in response and "message" in response["error"] and "value" in response["error"]["message"]:
                 raise Exception ("Error: {}".format(response["error"]["message"]["value"]))
@@ -200,7 +199,7 @@ class SharePointListWriter(object):
 
         for row in self.buffer:
             item = self.build_row_dicttionary(row)
-            response = self.parent.client.add_list_item(self.parent.sharepoint_list_title, item)
+            self.parent.client.add_list_item(self.parent.sharepoint_list_title, item)
 
     def build_row_dicttionary(self, row):
         ret = {}

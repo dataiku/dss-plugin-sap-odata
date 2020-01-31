@@ -113,7 +113,6 @@ class SharePointFSProvider(FSProvider):
         """
         path = self.get_rel_path(path)
         full_path = self.get_lnt_path(self.get_full_path(path))
-
         logger.info('browse:path="{}", full_path="{}"'.format(path, full_path))
 
         folders = self.client.get_folders(full_path)
@@ -183,7 +182,6 @@ class SharePointFSProvider(FSProvider):
     def get_last_modified(self, item):
         if 'TimeLastModified' in item:
             return int(self.format_date(item["TimeLastModified"]))
-        return
 
     def format_date(self, date):
         if date is not None:

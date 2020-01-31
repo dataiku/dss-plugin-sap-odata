@@ -17,6 +17,10 @@
                 {
                     "value": "oauth",
                     "label": "Azure Single Sign On"
+                },
+                {
+                    "value": "local",
+                    "label": "Local SharePoint login"
                 }
             ]
         },
@@ -33,6 +37,13 @@
             "type": "PRESET",
             "parameterSetId": "sharepoint-login",
             "visibilityCondition": "model.auth_type == 'login'"
+        },
+        {
+            "name": "sharepoint_local",
+            "label": "SharePoint preset",
+            "type": "PRESET",
+            "parameterSetId": "sharepoint-local-login",
+            "visibilityCondition": "model.auth_type == 'local'"
         }
     ]
 }
