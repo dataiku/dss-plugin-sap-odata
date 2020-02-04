@@ -13,11 +13,12 @@ class SharePointClient():
 
     def __init__(self, config):
         if config.get('auth_type') == AUTH_OAUTH:
-            self.sharepoint_tenant = config.get('sharepoint_oauth')['sharepoint_tenant']
-            self.sharepoint_site = config.get('sharepoint_oauth')['sharepoint_site']
+            login_details = config.get('sharepoint_oauth')
+            self.sharepoint_tenant = login_details['sharepoint_tenant']
+            self.sharepoint_site = login_details['sharepoint_site']
             self.sharepoint_url = self.sharepoint_tenant + ".sharepoint.com"
             self.sharepoint_origin = "https://" + self.sharepoint_url
-            self.sharepoint_access_token = config.get('sharepoint_oauth')['sharepoint_oauth']
+            self.sharepoint_access_token = login_details['sharepoint_oauth']
             self.session = SharePointSession(
                 None,
                 None,
@@ -26,20 +27,22 @@ class SharePointClient():
                 sharepoint_access_token = self.sharepoint_access_token
             )
         elif config.get('auth_type') == AUTH_LOGIN:
-            username = config.get('sharepoint_sharepy')['sharepoint_username']
-            password = config.get('sharepoint_sharepy')['sharepoint_password']
-            self.sharepoint_tenant = config.get('sharepoint_sharepy')['sharepoint_tenant']
-            self.sharepoint_site = config.get('sharepoint_sharepy')['sharepoint_site']
+            login_details = config.get('sharepoint_sharepy')
+            username = login_details['sharepoint_username']
+            password = login_details['sharepoint_password']
+            self.sharepoint_tenant = login_details['sharepoint_tenant']
+            self.sharepoint_site = login_details['sharepoint_site']
             self.sharepoint_url = self.sharepoint_tenant + ".sharepoint.com"
             self.sharepoint_origin = "https://" + self.sharepoint_url
             self.session = sharepy.connect(self.sharepoint_url, username=username, password=password)
         else:
-            username = config.get('sharepoint_local')['sharepoint_username']
-            password = config.get('sharepoint_local')['sharepoint_password']
-            self.sharepoint_url = config.get('sharepoint_local')['sharepoint_host']
-            self.sharepoint_tenant = config.get('sharepoint_local')['sharepoint_host']
-            self.sharepoint_origin = config.get('sharepoint_local')['sharepoint_host']
-            self.sharepoint_site = config.get('sharepoint_local')['sharepoint_site']
+            login_details = config.get('sharepoint_local')
+            username = login_details['sharepoint_username']
+            password = login_details['sharepoint_password']
+            self.sharepoint_url = login_details['sharepoint_host']
+            self.sharepoint_tenant = login_details['sharepoint_host']
+            self.sharepoint_origin = login_details['sharepoint_host']
+            self.sharepoint_site = login_details['sharepoint_site']
             self.session = LocalSharePointSession(
                 username,
                 password,
