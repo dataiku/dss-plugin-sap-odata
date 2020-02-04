@@ -4,6 +4,10 @@ import os, shutil, requests, sharepy, logging
 
 from datetime import datetime
 from sharepoint_client import SharePointSession, SharePointClient
+import sharepoint_client
+from dss_constants import *
+from sharepoint_constants import *
+
 try:
     from BytesIO import BytesIO ## for Python 2
 except ImportError:
@@ -47,16 +51,9 @@ class SharePointFSProvider(FSProvider):
         return os.path.join(*path_elts)
 
     def close(self):
-        """
-        Perform any necessary cleanup
-        """
         logger.info('close')
 
     def stat(self, path):
-        """
-        Get the info about the object at the given path inside the provider's root, or None 
-        if the object doesn't exist
-        """
         full_path = self.get_lnt_path(self.get_full_path(path))
         logger.info('stat:path="{}", full_path="{}"'.format(path, full_path))
         files = self.client.get_files(full_path)
@@ -64,10 +61,10 @@ class SharePointFSProvider(FSProvider):
 
         if self.has_sharepoint_items(files) or self.has_sharepoint_items(folders):
             return {
-                'path': self.get_lnt_path(path),
-                'size':0,
-                'lastModified':int(0) * 1000,
-                'isDirectory':True
+                DSS_PATH : self.get_lnt_path(path),
+                DSS_SIZE : 0,
+                DSS_LAST_MODIFIED : int(0) * 1000,
+                DSS_IS_DIRECTORY : True
             }
 
         path_to_item, item_name = os.path.split(full_path)
@@ -79,17 +76,17 @@ class SharePointFSProvider(FSProvider):
 
         if folder is not None:
             return {
-                'path': self.get_lnt_path(path),
-                'size':0,
-                'lastModified':self.get_last_modified(folder),
-                'isDirectory':True
+                DSS_PATH : self.get_lnt_path(path),
+                DSS_SIZE : 0,
+                DSS_LAST_MODIFIED : self.get_last_modified(folder),
+                DSS_IS_DIRECTORY : True
             }
         if file is not None:
             return {
-                'path': self.get_lnt_path(path),
-                'size':self.get_size(file),
-                'lastModified':self.get_last_modified(file),
-                'isDirectory':False
+                DSS_PATH : self.get_lnt_path(path),
+                DSS_SIZE : self.get_size(file),
+                DSS_LAST_MODIFIED : self.get_last_modified(file),
+                DSS_IS_DIRECTORY : False
             }
         return None
 
@@ -100,17 +97,11 @@ class SharePointFSProvider(FSProvider):
         return None
 
     def set_last_modified(self, path, last_modified):
-        """
-        Set the modification time on the object denoted by path. Return False if not possible
-        """
         full_path = self.get_full_path(path)
         os.utime(full_path, (os.path.getatime(full_path), last_modified / 1000))
         return True
 
     def browse(self, path):
-        """
-        List the file or directory at the given path, and its children (if directory)
-        """
         path = self.get_rel_path(path)
         full_path = self.get_lnt_path(self.get_full_path(path))
         logger.info('browse:path="{}", full_path="{}"'.format(path, full_path))
@@ -121,27 +112,27 @@ class SharePointFSProvider(FSProvider):
 
         for file in self.loop_sharepoint_items(files):
             children.append({
-                'fullPath': self.get_lnt_path(os.path.join(path, self.get_name(file))),
-                'exists': True,
-                'directory': False,
-                'size': int(file['Length']),
-                'lastModified' : self.get_last_modified(file)
+                DSS_FULL_PATH: self.get_lnt_path(os.path.join(path, self.get_name(file))),
+                DSS_EXISTS: True,
+                DSS_DIRECTORY: False,
+                DSS_SIZE: self.get_size(file),
+                DSS_LAST_MODIFIED : self.get_last_modified(file)
             })
         for folder in self.loop_sharepoint_items(folders):
             children.append({
-                'fullPath': self.get_lnt_path(os.path.join(path, self.get_name(folder))),
-                'exists': True,
-                'directory': True,
-                'size': 0,
-                'lastModified' : self.get_last_modified(folder)
+                DSS_FULL_PATH : self.get_lnt_path(os.path.join(path, self.get_name(folder))),
+                DSS_EXISTS : True,
+                DSS_DIRECTORY : True,
+                DSS_SIZE : 0,
+                DSS_LAST_MODIFIED : self.get_last_modified(folder)
             })
 
         if len(children) > 0:
             return {
-                'fullPath' : self.get_lnt_path(path),
-                'exists' : True,
-                'directory' : True,
-                'children' : children
+                DSS_FULL_PATH : self.get_lnt_path(path),
+                DSS_EXISTS : True,
+                DSS_DIRECTORY : True,
+                DSS_CHILDREN : children
             }
         path_to_file, file_name = os.path.split(full_path)
 
@@ -150,42 +141,42 @@ class SharePointFSProvider(FSProvider):
         for file in self.loop_sharepoint_items(files):
             if self.get_name(file) == file_name:
                 return {
-                    'fullPath' : self.get_lnt_path(path),
-                    'exists' : True, 'size':int(file['Length']),
-                    'lastModified':self.get_last_modified(file),
-                    'directory' : False
+                    DSS_FULL_PATH : self.get_lnt_path(path),
+                    DSS_EXISTS : True, DSS_SIZE : self.get_size(file),
+                    DSS_LAST_MODIFIED:self.get_last_modified(file),
+                    DSS_DIRECTORY : False
                 }
 
         parent_path, item_name = os.path.split(full_path)
         folders = self.client.get_folders(parent_path)
         folder = self.extract_item_from(item_name, folders)
         if folder is None:
-            ret = {'fullPath' : None, 'exists' : False}
+            ret = {DSS_FULL_PATH : None, DSS_EXISTS : False}
         else:
-            ret = {'fullPath' : self.get_lnt_path(path), 'exists' : True, 'size':0}
+            ret = {DSS_FULL_PATH : self.get_lnt_path(path), DSS_EXISTS : True, DSS_SIZE:0}
         return ret
 
     def loop_sharepoint_items(self, items):
-        if "d" not in items or "results" not in items['d']:
+        if SHAREPOINT_RESULTS_CONTAINER_V2 not in items or SHAREPOINT_RESULTS not in items[SHAREPOINT_RESULTS_CONTAINER_V2]:
             yield
-        for item in items['d']['results']:
+        for item in items[SHAREPOINT_RESULTS_CONTAINER_V2][SHAREPOINT_RESULTS]:
             yield item
 
     def has_sharepoint_items(self, items):
-        if "d" not in items or "results" not in items['d']:
+        if SHAREPOINT_RESULTS_CONTAINER_V2 not in items or SHAREPOINT_RESULTS not in items[SHAREPOINT_RESULTS_CONTAINER_V2]:
             return False
-        if len(items['d']['results']) > 0:
+        if len(items[SHAREPOINT_RESULTS_CONTAINER_V2][SHAREPOINT_RESULTS]) > 0:
             return True
         else:
             return False
 
     def get_last_modified(self, item):
-        if 'TimeLastModified' in item:
-            return int(self.format_date(item["TimeLastModified"]))
+        if SHAREPOINT_TIME_LAST_MODIFIED in item:
+            return int(self.format_date(item[SHAREPOINT_TIME_LAST_MODIFIED]))
 
     def format_date(self, date):
         if date is not None:
-            utc_time = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
+            utc_time = datetime.strptime(date, SHAREPOINT_TIME_FORMAT)
             epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
             return int(epoch_time) * 1000
         else:
@@ -201,11 +192,6 @@ class SharePointFSProvider(FSProvider):
         return header
 
     def enumerate(self, path, first_non_empty):
-        """
-        Enumerate files recursively from prefix. If first_non_empty, stop at the first non-empty file.
-        
-        If the prefix doesn't denote a file or folder, return None
-        """
         path = self.get_rel_path(path)
         full_path = self.get_lnt_path(self.get_full_path(path))
         path_to_item, item_name = os.path.split(full_path)
@@ -213,8 +199,8 @@ class SharePointFSProvider(FSProvider):
         return ret
 
     def get_size(self, item):
-        if "Length" in item:
-            return int(item['Length'])
+        if SHAREPOINT_LENGTH in item:
+            return int(item[SHAREPOINT_LENGTH])
         else:
             return 0
 
@@ -232,18 +218,15 @@ class SharePointFSProvider(FSProvider):
         files = self.client.get_files(full_path)
         for file in self.loop_sharepoint_items(files):
             paths.append({
-                'path':self.get_lnt_path(os.path.join(path, self.get_name(file))),
-                'lastModified':self.get_last_modified(file),
-                'size':self.get_size(file)
+                DSS_PATH : self.get_lnt_path(os.path.join(path, self.get_name(file))),
+                DSS_LAST_MODIFIED : self.get_last_modified(file),
+                DSS_SIZE : self.get_size(file)
             })
             if first_non_empty:
                 return paths
         return paths
 
     def delete_recursive(self, path):
-        """
-        Delete recursively from path. Return the number of deleted files (optional)
-        """
         full_path = self.get_full_path(path)
         logger.info('delete_recursive:path={},fullpath={}'.format(path, full_path))
         self.assert_path_is_not_root(full_path)
@@ -273,20 +256,14 @@ class SharePointFSProvider(FSProvider):
             return None
 
     def move(self, from_path, to_path):
-        """
-        Move a file or folder to a new path inside the provider's root. Return false if the moved file didn't exist
-        """
         full_from_path = self.get_full_path(from_path)
         full_to_path = self.get_full_path(to_path)
         logger.info('move:from={},to={}'.format(full_from_path, full_to_path))
 
         response = self.client.move_file(full_from_path, full_to_path)
-        return "d" in response and "MoveTo" in response["d"]
+        return SHAREPOINT_RESULTS_CONTAINER_V2 in response and "MoveTo" in response[SHAREPOINT_RESULTS_CONTAINER_V2]
 
     def read(self, path, stream, limit):
-        """
-        Read the object denoted by path into the stream. Limit is an optional bound on the number of bytes to send
-        """
         full_path = self.get_full_path(path)
         logger.info('read:full_path={}'.format(full_path))
 
@@ -295,9 +272,6 @@ class SharePointFSProvider(FSProvider):
         shutil.copyfileobj(bio, stream)
 
     def write(self, path, stream):
-        """
-        Write the stream to the object denoted by path into the stream
-        """
         full_path = self.get_full_path(path)
         logger.info('write:path="{}", full_path="{}"'.format(path, full_path))
         bio = BytesIO()

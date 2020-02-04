@@ -6,11 +6,13 @@ try:
 except ImportError:
     from io import BytesIO ## for Python 3
 
-APPLICATION_JSON = "application/json;odata=verbose"
+from sharepoint_constants import *
+from dss_constants import *
+
 class SharePointClient():
 
     def __init__(self, config):
-        if config.get('auth_type') == "oauth":
+        if config.get('auth_type') == AUTH_OAUTH:
             self.sharepoint_tenant = config.get('sharepoint_oauth')['sharepoint_tenant']
             self.sharepoint_site = config.get('sharepoint_oauth')['sharepoint_site']
             self.sharepoint_url = self.sharepoint_tenant + ".sharepoint.com"
@@ -23,7 +25,7 @@ class SharePointClient():
                 self.sharepoint_site,
                 sharepoint_access_token = self.sharepoint_access_token
             )
-        elif config.get('auth_type') == "login":
+        elif config.get('auth_type') == AUTH_LOGIN:
             username = config.get('sharepoint_sharepy')['sharepoint_username']
             password = config.get('sharepoint_sharepy')['sharepoint_password']
             self.sharepoint_tenant = config.get('sharepoint_sharepy')['sharepoint_tenant']
@@ -123,9 +125,9 @@ class SharePointClient():
     def get_list_all_items(self, list_title):
         items = self.get_list_items(list_title)
         buffer = items
-        while "d" in items and "__next" in items["d"]:
-            items = self.session.get(items["d"]["__next"]).json()
-            buffer["d"]["results"].extend(items["d"]["results"])
+        while SHAREPOINT_RESULTS_CONTAINER_V2 in items and SHAREPOINT_NEXT_PAGE in items[SHAREPOINT_RESULTS_CONTAINER_V2]:
+            items = self.session.get(items[SHAREPOINT_RESULTS_CONTAINER_V2][SHAREPOINT_NEXT_PAGE]).json()
+            buffer[SHAREPOINT_RESULTS_CONTAINER_V2][SHAREPOINT_RESULTS].extend(items[SHAREPOINT_RESULTS_CONTAINER_V2][SHAREPOINT_RESULTS])
         return buffer
 
     def get_list_items(self, list_title):
@@ -271,8 +273,6 @@ class SharePointSession():
 
 class LocalSharePointSession():
 
-    APPLICATION_JSON_NOMETADATA = "application/json; odata=nometadata"
-
     def __init__(self, sharepoint_user_name, sharepoint_password, sharepoint_origin, sharepoint_site, sharepoint_access_token = None):
         self.form_digest_value = None
         self.sharepoint_origin = sharepoint_origin
@@ -296,11 +296,11 @@ class LocalSharePointSession():
         if self.form_digest_value is not None:
             return self.form_digest_value
         headers={}
-        headers["accept"] = self.APPLICATION_JSON_NOMETADATA
+        headers["accept"] = APPLICATION_JSON_NOMETADATA
         response = requests.post(self.get_context_info_url(), headers = headers, auth=self.auth)
         json_response = response.json()
-        if "FormDigestValue" in json_response:
-            self.form_digest_value = json_response["FormDigestValue"]
+        if SHAREPOINT_FORM_DIGEST_VALUE in json_response:
+            self.form_digest_value = json_response[SHAREPOINT_FORM_DIGEST_VALUE]
             return self.form_digest_value
 
     def get_context_info_url(self):
