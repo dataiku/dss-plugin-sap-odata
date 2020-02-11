@@ -1,4 +1,4 @@
-import os, requests, shutil, sharepy
+import os, requests, sharepy
 from requests_ntlm import HttpNtlmAuth
 
 try:
