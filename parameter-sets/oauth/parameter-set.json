@@ -1,0 +1,58 @@
+{
+    "meta": {
+        "label": "Single Sign On",
+        "description": "",
+        "icon": "icon-list"
+    },
+    "defaultDefinableInline": true,
+    "defaultDefinableAtProjectLevel": true,
+    "pluginParams": [],
+    "params": [
+        {
+            "name": "odata_oauth",
+            "type": "CREDENTIAL_REQUEST",
+            "label": "Azure Single Sign On",
+            "credentialRequestSettings": {
+                "type": "OAUTH2",
+                "oauth2Flow": "authorization_code",
+                "oauth2Provider": "AZURE",
+                "authorizationEndpoint": "https://login.microsoftonline.com/common/oauth2/authorize",
+                "tokenEndpoint": "https://login.microsoftonline.com/common/oauth2/token",
+                "scope": "User.Read MyFiles.Read MyFiles.Write AllSites.Read AllSites.Write Web.Read Web.Write List.Read List.Write"
+            }
+        },
+        {
+            "name": "odata_instance",
+            "label": "Ressourcei",
+            "type": "STRING",
+            "description": "",
+            "mandatory": true
+        },
+        {
+            "name": "odata_version",
+            "label": "OData protocol version",
+            "type": "SELECT",
+            "selectChoices": [
+                {
+                    "value": "v2",
+                    "label": "Version 2"
+                },
+                {
+                    "value": "v3",
+                    "label": "Version 3"
+                },
+                {
+                    "value": "v4",
+                    "label": "Version 4"
+                }
+            ]
+        },
+        {
+            "name": "authorizationEndpoint",
+            "label": "Authorization endpoint",
+            "type": "STRING",
+            "description": "",
+            "mandatory": true
+        }
+    ]
+}

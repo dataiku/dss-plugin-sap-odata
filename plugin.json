@@ -1,0 +1,14 @@
+{
+    "id": "sap-odata",
+    "version": "1.0.0",
+    "meta": {
+        "label": "SAP OData",
+        "description": "Import data from your SAP account",
+        "author": "Dataiku (Alex Bourret)",
+        "icon": "icon-list",
+        "tags": ["SAP"],
+        "url": "https://www.dataiku.com/product/plugins/sap-odata/",
+        "licenseInfo": "Apache Software License",
+        "supportLevel": "NOT_SUPPORTED"
+    }
+}

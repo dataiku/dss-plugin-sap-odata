@@ -1,0 +1,65 @@
+{
+    "meta": {
+        "label": "OData login",
+        "description": "",
+        "icon": "icon-list"
+    },
+    "defaultDefinableInline": true,
+    "defaultDefinableAtProjectLevel": true,
+    "pluginParams": [],
+    "params": [
+        {
+            "name": "odata_instance",
+            "label": "Ressource",
+            "type": "STRING",
+            "description": "",
+            "mandatory": true
+        },
+        {
+            "name": "odata_version",
+            "label": "OData protocol version",
+            "type": "SELECT",
+            "defaultValue" : "sap",
+            "selectChoices": [
+                {
+                    "value": "sap",
+                    "label": "SAP OData"
+                },
+                {
+                    "value": "v2",
+                    "label": "Version 2"
+                },
+                {
+                    "value": "v3",
+                    "label": "Version 3"
+                },
+                {
+                    "value": "v4",
+                    "label": "Version 4"
+                }
+            ]
+        },
+        {
+            "name": "odata_username",
+            "label": "Username",
+            "type": "STRING",
+            "description": "",
+            "mandatory": false
+        },
+        {
+            "name": "odata_password",
+            "label": "Password",
+            "type": "PASSWORD",
+            "description": "",
+            "mandatory": false
+        },
+        {
+            "name": "sap_client",
+            "label": "Client",
+            "type": "STRING",
+            "description": "",
+            "mandatory": false,
+            "visibilityCondition": "model.odata_version == 'sap'"
+        }
+    ]
+}
