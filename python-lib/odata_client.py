@@ -1,57 +1,72 @@
-import requests, logging
-from odata_constants import *
-from dss_constants import *
+import requests
+import logging
+from odata_constants import ODataConstants
+from dss_constants import DSSConstants
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
                     format='sap-odata plugin %(levelname)s - %(message)s')
 
+
 class ODataClient():
 
     def __init__(self, config):
-        self.auth_type = config.get(DSS_AUTH_TYPE)
+        self.auth_type = config.get(DSSConstants.AUTH_TYPE)
         login = config.get('sap-odata_{}'.format(self.auth_type))
-        self.odata_instance = login[ODATA_INSTANCE].strip("/")
-        self.odata_list_title = config.get(ODATA_LIST_TITLE)
-        odata_version = login[ODATA_VERSION]
+        self.odata_instance = login[ODataConstants.INSTANCE].strip("/")
+        self.odata_list_title = config.get(ODataConstants.LIST_TITLE)
+        odata_version = login[ODataConstants.VERSION]
         self.set_odata_protocol_version(odata_version)
-        
-        if ODATA_OAUTH in config and ODATA_OAUTH in config[ODATA_OAUTH]:
-            self.odata_access_token = config.get(ODATA_OAUTH)[ODATA_OAUTH]
+
+        if ODataConstants.OAUTH in config and ODataConstants.OAUTH in config[ODataConstants.OAUTH]:
+            self.odata_access_token = config.get(ODataConstants.OAUTH)[ODataConstants.OAUTH]
         else:
             self.odata_access_token = None
 
         self.session = self.get_session(config, odata_version)
 
     def set_odata_protocol_version(self, odata_version):
-        if odata_version == ODATA_V4:
+        if odata_version == ODataConstants.ODATA_V4:
             self.force_json = False
             self.json_in_query_string = False
-            self.data_container = ODATA_DATA_CONTAINER_V4
-        if odata_version == ODATA_VSAP:
+            self.data_container = ODataConstants.DATA_CONTAINER_V4
+        if odata_version == ODataConstants.ODATA_VSAP:
             self.force_json = True
             self.json_in_query_string = True
-            self.data_container = ODATA_DATA_CONTAINER_V2
-        if odata_version == ODATA_V3:
+            self.data_container = ODataConstants.DATA_CONTAINER_V2
+        if odata_version == ODataConstants.ODATA_V3:
             self.force_json = True
             self.json_in_query_string = True
-            self.data_container = ODATA_DATA_CONTAINER_V3
-        if odata_version == ODATA_V2:
+            self.data_container = ODataConstants.DATA_CONTAINER_V3
+        if odata_version == ODataConstants.ODATA_V2:
             self.force_json = True
             self.json_in_query_string = False
-            self.data_container = ODATA_DATA_CONTAINER_V2
+            self.data_container = ODataConstants.DATA_CONTAINER_V2
 
     def get_session(self, config, odata_version):
         session = requests.Session()
-        if odata_version == ODATA_VSAP:
-            self.sap_client = config[ODATA_LOGIN][SAP_CLIENT]
-            session.auth = (config[ODATA_LOGIN][ODATA_USERNAME], config[ODATA_LOGIN][ODATA_PASSWORD])
-            session.head(self.odata_instance, params={SAP_CLIENT_HEADER:self.sap_client})
-        elif ODATA_LOGIN in config and ODATA_USERNAME in config[ODATA_LOGIN] and ODATA_PASSWORD in config[ODATA_LOGIN]:
-            session.auth = (config[ODATA_LOGIN][ODATA_USERNAME], config[ODATA_LOGIN][ODATA_PASSWORD])
+        if odata_version == ODataConstants.ODATA_VSAP:
+            self.sap_client = config[ODataConstants.LOGIN][ODataConstants.SAP_CLIENT]
+            session.auth = (
+                config[ODataConstants.LOGIN][ODataConstants.USERNAME],
+                config[ODataConstants.LOGIN][ODataConstants.PASSWORD]
+            )
+            session.head(
+                self.odata_instance,
+                params={
+                    ODataConstants.SAP_CLIENT_HEADER: self.sap_client
+                }
+            )
+        elif ODataConstants.LOGIN in config and \
+            ODataConstants.USERNAME in config[ODataConstants.LOGIN] and \
+                ODataConstants.PASSWORD in config[ODataConstants.LOGIN]:
+            session.auth = (
+                config[ODataConstants.LOGIN][ODataConstants.USERNAME],
+                config[ODataConstants.LOGIN][ODataConstants.PASSWORD]
+            )
         return session
 
-    def get_entity_collections(self, entity, records_limit = None):
+    def get_entity_collections(self, entity, records_limit=None):
         query_options = self.get_base_query_options()
         url = self.odata_instance + '/' + entity.strip("/") + self.get_query_string(query_options)
         response = self.get(url)
@@ -59,11 +74,10 @@ class ODataClient():
         data = response.json()
         return self.format(data[self.data_container])
 
-    def get(self, url, headers = {}):
+    def get(self, url, headers={}):
         headers = self.get_headers()
         try:
-            ret =  self.session.get(url, headers = headers)
-            #ret.raise_for_status()
+            ret = self.session.get(url, headers=headers)
             return ret
         except Exception as err:
             logging.error('error:{}'.format(err))
@@ -71,28 +85,30 @@ class ODataClient():
     def get_headers(self):
         headers = {}
         if self.force_json:
-            headers["accept"] = APPLICATION_JSON
+            headers["accept"] = DSSConstants.APPLICATION_JSON
         headers["Authorization"] = self.get_authorization_bearer()
         return headers
 
-    def get_base_query_options(self, records_limit = None):
-        if self.force_json and self.json_in_query_string :
-            query_options = [JSON_FORMAT]
+    def get_base_query_options(self, records_limit=None):
+        if self.force_json and self.json_in_query_string:
+            query_options = [DSSConstants.JSON_FORMAT]
         else:
             query_options = []
         if records_limit is not None and int(records_limit) > 0:
-            query_options.append("$top={}".format(records_limit))
+            query_options.append(
+                ODataConstants.RECORD_LIMIT_QUERY.format(records_limit)
+            )
         return query_options
 
     def format(self, item):
-        if ODATA_ENTITYSETS in item:
-            rows = item[ODATA_ENTITYSETS]
-            ret=[]
+        if ODataConstants.ENTITYSETS in item:
+            rows = item[ODataConstants.ENTITYSETS]
+            ret = []
             for row in rows:
-                ret.append({ODATA_ENTITYSETS:row})
+                ret.append({ODataConstants.ENTITYSETS: row})
             return ret
-        if ODATA_DATA_RESULTS in item:
-            ret = item[ODATA_DATA_RESULTS]
+        if ODataConstants.DATA_RESULTS in item:
+            ret = item[ODataConstants.DATA_RESULTS]
         else:
             ret = item
         if isinstance(ret, list):
@@ -102,7 +118,7 @@ class ODataClient():
 
     def get_authorization_bearer(self):
         if self.odata_access_token is not None:
-            return DSS_AUTHORISATION_BEARER.format(self.odata_access_token)
+            return DSSConstants.AUTHORISATION_BEARER.format(self.odata_access_token)
         else:
             return None
 

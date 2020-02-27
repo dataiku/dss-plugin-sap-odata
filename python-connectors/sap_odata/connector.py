@@ -1,6 +1,5 @@
-from six.moves import xrange
 from dataiku.connector import Connector
-import logging, requests
+import logging
 
 from odata_client import ODataClient
 
@@ -8,10 +7,8 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
                     format='sap-odata plugin %(levelname)s - %(message)s')
 
-# Pyslet branch odata4-project works with V2, V3
-# odata works with V4
 
-class ODataConnector(Connector):
+class SAPODataConnector(Connector):
 
     def __init__(self, config, plugin_config):
         """
@@ -50,7 +47,7 @@ class ODataConnector(Connector):
         return None
 
     def generate_rows(self, dataset_schema=None, dataset_partitioning=None,
-                            partition_id=None, records_limit = -1):
+                      partition_id=None, records_limit=-1):
         """
         The main reading method.
 
@@ -59,8 +56,7 @@ class ODataConnector(Connector):
 
         The dataset schema and partitioning are given for information purpose.
         """
-        
-        items = self.client.get_entity_collections(self.odata_list_title, records_limit = records_limit)
+        items = self.client.get_entity_collections(self.odata_list_title, records_limit=records_limit)
         for item in items:
             yield self.clean(item)
 
@@ -73,20 +69,16 @@ class ODataConnector(Connector):
 
     def get_schema_set(self, set_name):
         for one_set in self.client.schema.entity_sets:
-            print('ALX:one_set.name={}'.format(one_set.name))
             if one_set.name == set_name:
-                print('ALX:found, return')
                 return one_set
 
     def get_set(self, set_name):
         for one_set in self.client.entity_sets:
-            print('ALX:one_set.name={}'.format(one_set.name))
             if one_set.name == set_name:
-                print('ALX:found, return')
                 return one_set
 
     def get_writer(self, dataset_schema=None, dataset_partitioning=None,
-                         partition_id=None):
+                   partition_id=None):
         """
         Returns a writer object to write in the dataset (or in a partition).
 
@@ -102,12 +94,10 @@ class ODataConnector(Connector):
         """
         raise Exception("Unimplemented")
 
-
     def list_partitions(self, partitioning):
         """Return the list of partitions for the partitioning scheme
         passed as parameter"""
         return []
-
 
     def partition_exists(self, partitioning, partition_id):
         """Return whether the partition passed as parameter exists
@@ -116,7 +106,6 @@ class ODataConnector(Connector):
         in the connector definition
         """
         raise Exception("unimplemented")
-
 
     def get_records_count(self, partitioning=None, partition_id=None):
         """
@@ -160,10 +149,10 @@ class ODataDatasetWriter(object):
                 self.parent.service.create_custom_field(self.parent.odata_list_title, column["name"])
 
         for row in self.buffer:
-            item = self.build_row_dicttionary(row)
-            response = self.parent.service.add_list_item(self.parent.odata_list_title, item)
+            item = self.build_row_dictionary(row)
+            self.parent.service.add_list_item(self.parent.odata_list_title, item)
 
-    def build_row_dicttionary(self, row):
+    def build_row_dictionary(self, row):
         ret = {}
         for column, structure in zip(row, self.columns):
             ret[structure["name"].replace(" ", "_x0020_")] = column
