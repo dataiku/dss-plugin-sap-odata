@@ -23,7 +23,7 @@
         },
         {
             "name": "odata_instance",
-            "label": "Ressourcei",
+            "label": "Ressource",
             "type": "STRING",
             "description": "",
             "mandatory": true

@@ -18,8 +18,8 @@ class ODataClient():
         odata_version = login[ODataConstants.VERSION]
         self.set_odata_protocol_version(odata_version)
 
-        if ODataConstants.OAUTH in config and ODataConstants.OAUTH in config[ODataConstants.OAUTH]:
-            self.odata_access_token = config.get(ODataConstants.OAUTH)[ODataConstants.OAUTH]
+        if "sap-odata_oauth" in config and ODataConstants.OAUTH in config["sap-odata_oauth"]:
+            self.odata_access_token = config.get("sap-odata_oauth")[ODataConstants.OAUTH]
         else:
             self.odata_access_token = None
 
