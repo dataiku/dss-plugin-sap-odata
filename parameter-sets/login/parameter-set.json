@@ -1,6 +1,6 @@
 {
     "meta": {
-        "label": "OData login",
+        "label": "SAP/OData login",
         "description": "",
         "icon": "icon-list"
     },
@@ -12,8 +12,17 @@
             "name": "odata_instance",
             "label": "Ressource",
             "type": "STRING",
-            "description": "",
-            "mandatory": true
+            "description": "http://<Host>:<Port>/sap/opu/odata/SAP/<Service Name>",
+            "mandatory": true,
+            "visibilityCondition": "model.odata_version == 'sap'"
+        },
+        {
+            "name": "odata_instance",
+            "label": "Ressource",
+            "type": "STRING",
+            "description": "URL to the .svc ressource, e.g. https://services.odata.org/V3/OData/OData.svc/",
+            "mandatory": true,
+            "visibilityCondition": "model.odata_version != 'sap'"
         },
         {
             "name": "odata_version",
