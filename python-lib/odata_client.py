@@ -96,7 +96,7 @@ class ODataClient():
             query_options = []
         if records_limit is not None and int(records_limit) > 0:
             query_options.append(
-                ODataConstants.RECORD_LIMIT_QUERY.format(records_limit)
+                ODataConstants.RECORD_LIMIT.format(records_limit)
             )
         return query_options
 
