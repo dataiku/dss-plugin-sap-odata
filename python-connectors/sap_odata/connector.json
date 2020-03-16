@@ -37,6 +37,14 @@
             "visibilityCondition": "model.auth_type == 'login'"
         },
         {
+            "name": "odata_service_node",
+            "label": "Service node",
+            "description": "",
+            "type": "STRING",
+            "defaultValue": "",
+            "mandatory": false
+        },
+        {
             "name": "odata_list_title",
             "label": "Entity",
             "description": "",

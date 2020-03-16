@@ -13,7 +13,12 @@ class ODataClient():
     def __init__(self, config):
         self.auth_type = config.get(DSSConstants.AUTH_TYPE)
         login = config.get('sap-odata_{}'.format(self.auth_type))
-        self.odata_instance = login[ODataConstants.INSTANCE].strip("/")
+        self.odata_service_node = config.get(ODataConstants.SERVICE_NODE).strip("/")
+        if self.odata_service_node != "":
+            self.odata_instance = "/".join([login[ODataConstants.INSTANCE].strip("/"), self.odata_service_node])
+        else:
+            self.odata_instance = login[ODataConstants.INSTANCE].strip("/")
+        self.ignore_ssl_check = login["ignore_ssl_check"]
         self.odata_list_title = config.get(ODataConstants.LIST_TITLE)
         odata_version = login[ODataConstants.VERSION]
         self.set_odata_protocol_version(odata_version)
@@ -22,7 +27,6 @@ class ODataClient():
             self.odata_access_token = config.get("sap-odata_oauth")[ODataConstants.OAUTH]
         else:
             self.odata_access_token = None
-
         self.session = self.get_session(config, odata_version)
 
     def set_odata_protocol_version(self, odata_version):
@@ -45,6 +49,8 @@ class ODataClient():
 
     def get_session(self, config, odata_version):
         session = requests.Session()
+        if self.ignore_ssl_check is True:
+            session.verify = False
         if odata_version == ODataConstants.ODATA_VSAP:
             self.sap_client = config[ODataConstants.LOGIN][ODataConstants.SAP_CLIENT]
             session.auth = (
@@ -76,8 +82,13 @@ class ODataClient():
 
     def get(self, url, headers={}):
         headers = self.get_headers()
+        args = {
+            "headers": headers
+        }
+        if self.ignore_ssl_check is True:
+            args["verify"] = False
         try:
-            ret = self.session.get(url, headers=headers)
+            ret = self.session.get(url, **args)
             return ret
         except Exception as err:
             logging.error('error:{}'.format(err))

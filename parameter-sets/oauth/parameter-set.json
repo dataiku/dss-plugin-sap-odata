@@ -29,6 +29,13 @@
             "mandatory": true
         },
         {
+            "name": "ignore_ssl_check",
+            "label": "Ignore SSL check",
+            "type": "BOOLEAN",
+            "description": "",
+            "defaultValue": false
+        },
+        {
             "name": "odata_version",
             "label": "OData protocol version",
             "type": "SELECT",
