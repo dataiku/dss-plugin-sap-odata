@@ -23,7 +23,7 @@ class SAPODataConnector(Connector):
         self.client = ODataClient(config)
         # According to https://www.odata.org/documentation/odata-version-2-0/uri-conventions/
         # https://services.odata.org/OData/OData.svc/Category(1)/Products?$top=2&$orderby=name
-        # <-      service root URI                -><- ressource path  -><- query options   ->
+        # <-      service root URI                -><- resource path  -><- query options   ->
 
     def get_read_schema(self):
         """

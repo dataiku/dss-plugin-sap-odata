@@ -10,7 +10,7 @@
     "params": [
         {
             "name": "odata_instance",
-            "label": "Ressource",
+            "label": "Resource",
             "type": "STRING",
             "description": "http://<Host>:<Port>/sap/opu/odata/SAP/<Service Name>",
             "mandatory": true,
@@ -18,9 +18,9 @@
         },
         {
             "name": "odata_instance",
-            "label": "Ressource",
+            "label": "Resource",
             "type": "STRING",
-            "description": "URL to the .svc ressource, e.g. https://services.odata.org/V3/OData/OData.svc/",
+            "description": "URL to the .svc resource, e.g. https://services.odata.org/V3/OData/OData.svc/",
             "mandatory": true,
             "visibilityCondition": "model.odata_version != 'sap'"
         },
