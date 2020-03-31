@@ -2,6 +2,7 @@ import requests
 import logging
 from odata_constants import ODataConstants
 from dss_constants import DSSConstants
+from time import sleep
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
@@ -9,6 +10,8 @@ logging.basicConfig(level=logging.INFO,
 
 
 class ODataClient():
+
+    MAX_RETRIES = 3
 
     def __init__(self, config):
         self.auth_type = config.get(DSSConstants.AUTH_TYPE)
@@ -28,6 +31,7 @@ class ODataClient():
         else:
             self.odata_access_token = None
         self.session = self.get_session(config, odata_version)
+        self.retries = 0
 
     def set_odata_protocol_version(self, odata_version):
         if odata_version == ODataConstants.ODATA_V4:
@@ -75,10 +79,32 @@ class ODataClient():
     def get_entity_collections(self, entity, records_limit=None):
         query_options = self.get_base_query_options()
         url = self.odata_instance + '/' + entity.strip("/") + self.get_query_string(query_options)
-        response = self.get(url)
-        self.assert_response(response)
-        data = response.json()
+        data = None
+        while self._should_retry(data):
+            response = self.get(url)
+            self.assert_response(response)
+            data = response.json()
         return self.format(data[self.data_container])
+
+    def _should_retry(self, data):
+        if data is None:
+            self.retries = 0
+            return True
+        self.retries += 1
+        if "error" in data:
+            if "message" in data["error"] and "value" in data["error"]["message"]:
+                # {'error': {'code': '/IWBEP/CM_MGW_RT/004', 'message': {'lang': 'en', 'value': 'Metadata cache on hub system outdated; execute OData request again'}, 'innererror': {'application': {'component_id': 'BC-SRV-NWD-FRA', 'service_namespace': '/SAP/', 'service_id': 'EPM_REF_APPS_SHOP_SRV', 'service_version': '0001'}, 'transactionid': 'B9E0A2A100BE00F0E005E82AAD173F37', 'timestamp': '20200331161618.6771190', 'Error_Resolution': {'SAP_Transaction': 'For backend administrators: run transaction /IWFND/ERROR_LOG on SAP Gateway hub system and search for entries with the timestamp above for more details', 'SAP_Note': 'See SAP Note 1797736 for error analysis (https://service.sap.com/sap/support/notes/1797736)'}, 'errordetails': [{'code': '/IWBEP/CX_MGW_GW_MD_OUTDATED', 'message': 'Metadata cache on hub system outdated; execute OData request again', 'propertyref': '', 'severity': 'error', 'target': ''}]}}}
+                if self.retries < self.MAX_RETRIES:
+                    logging.warning("Remote service error : {}. Attempt {}, trying again".format(data["error"]["message"]["value"], self.retries))
+                    sleep(2)
+                    return True
+                else:
+                    logging.error("Remote service error : {}. Attempt {}, stop trying.".format(data["error"]["message"]["value"], self.retries))
+                    raise Exception("Remote service error : {}".format(data["error"]["message"]["value"]))
+            else:
+                logging.error("Remote service error")
+                raise Exception("Remote service error")
+        return False
 
     def get(self, url, headers={}):
         headers = self.get_headers()
@@ -147,9 +173,3 @@ class ODataClient():
             raise Exception("{}".format(response))
         if status_code == 401:
             raise Exception("Forbidden access")
-        json_response = response.json()
-        if "error" in json_response:
-            if "message" in json_response["error"] and "value" in json_response["error"]["message"]:
-                raise Exception("Remote service error : {}".format(json_response["error"]["message"]["value"]))
-            else:
-                raise Exception("Error")
