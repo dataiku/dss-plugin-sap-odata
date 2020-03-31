@@ -147,3 +147,9 @@ class ODataClient():
             raise Exception("{}".format(response))
         if status_code == 401:
             raise Exception("Forbidden access")
+        json_response = response.json()
+        if "error" in json_response:
+            if "message" in json_response["error"] and "value" in json_response["error"]["message"]:
+                raise Exception("Remote service error : {}".format(json_response["error"]["message"]["value"]))
+            else:
+                raise Exception("Error")
