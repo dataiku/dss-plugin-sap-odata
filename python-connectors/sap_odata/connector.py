@@ -10,6 +10,8 @@ logging.basicConfig(level=logging.INFO,
 
 class SAPODataConnector(Connector):
 
+    KEYS_TO_REMOVE = ["__metadata", "odata.type"]
+
     def __init__(self, config, plugin_config):
         """
         The configuration parameters set up by the user in the settings tab of the
@@ -61,8 +63,7 @@ class SAPODataConnector(Connector):
             yield self.clean(item)
 
     def clean(self, item):
-        keys_to_remove = ["__metadata", "odata.type"]
-        for key in keys_to_remove:
+        for key in self.KEYS_TO_REMOVE:
             if key in item:
                 del item[key]
         return item
@@ -86,7 +87,7 @@ class SAPODataConnector(Connector):
 
         Note: the writer is responsible for clearing the partition, if relevant.
         """
-        return ODataDatasetWriter(self.config, self, dataset_schema, dataset_partitioning, partition_id)
+        raise Exception("Unimplemented")
 
     def get_partitioning(self):
         """
@@ -115,45 +116,3 @@ class SAPODataConnector(Connector):
         in the connector definition
         """
         raise Exception("unimplemented")
-
-
-class ODataDatasetWriter(object):
-    def __init__(self, config, parent, dataset_schema, dataset_partitioning, partition_id):
-        self.parent = parent
-        self.config = config
-        self.dataset_schema = dataset_schema
-        self.dataset_partitioning = dataset_partitioning
-        self.partition_id = partition_id
-        self.buffer = []
-        logger.info('init ODataDatasetWriter')
-        self.columns = dataset_schema["columns"]
-
-    def write_row(self, row):
-        """
-        Row is a tuple with N + 1 elements matching the schema passed to get_writer.
-        The last element is a dict of columns not found in the schema
-        """
-        logger.info('write_row:row={}'.format(row))
-        self.buffer.append(row)
-
-    def close(self):
-        self.flush()
-
-    def flush(self):
-        self.parent.service.delete_list(self.parent.odata_list_title)
-        self.parent.service.save(self.parent.odata_list_title)
-
-        self.parent.get_read_schema()
-        for column in self.columns:
-            if column['name'] not in self.parent.columns:
-                self.parent.service.create_custom_field(self.parent.odata_list_title, column["name"])
-
-        for row in self.buffer:
-            item = self.build_row_dictionary(row)
-            self.parent.service.add_list_item(self.parent.odata_list_title, item)
-
-    def build_row_dictionary(self, row):
-        ret = {}
-        for column, structure in zip(row, self.columns):
-            ret[structure["name"].replace(" ", "_x0020_")] = column
-        return ret

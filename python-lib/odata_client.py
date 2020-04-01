@@ -93,7 +93,7 @@ class ODataClient():
         self.retries += 1
         if "error" in data:
             if "message" in data["error"] and "value" in data["error"]["message"]:
-                # {'error': {'code': '/IWBEP/CM_MGW_RT/004', 'message': {'lang': 'en', 'value': 'Metadata cache on hub system outdated; execute OData request again'}, 'innererror': {'application': {'component_id': 'BC-SRV-NWD-FRA', 'service_namespace': '/SAP/', 'service_id': 'EPM_REF_APPS_SHOP_SRV', 'service_version': '0001'}, 'transactionid': 'B9E0A2A100BE00F0E005E82AAD173F37', 'timestamp': '20200331161618.6771190', 'Error_Resolution': {'SAP_Transaction': 'For backend administrators: run transaction /IWFND/ERROR_LOG on SAP Gateway hub system and search for entries with the timestamp above for more details', 'SAP_Note': 'See SAP Note 1797736 for error analysis (https://service.sap.com/sap/support/notes/1797736)'}, 'errordetails': [{'code': '/IWBEP/CX_MGW_GW_MD_OUTDATED', 'message': 'Metadata cache on hub system outdated; execute OData request again', 'propertyref': '', 'severity': 'error', 'target': ''}]}}}
+                # SAP error causing troubles: {'error': {'code': '/IWBEP/CM_MGW_RT/004', 'message': {value': 'Metadata cache on
                 if self.retries < self.MAX_RETRIES:
                     logging.warning("Remote service error : {}. Attempt {}, trying again".format(data["error"]["message"]["value"], self.retries))
                     sleep(2)
@@ -122,7 +122,7 @@ class ODataClient():
     def get_headers(self):
         headers = {}
         if self.force_json:
-            headers["accept"] = DSSConstants.APPLICATION_JSON
+            headers["accept"] = DSSConstants.CONTENT_TYPE
         headers["Authorization"] = self.get_authorization_bearer()
         return headers
 
