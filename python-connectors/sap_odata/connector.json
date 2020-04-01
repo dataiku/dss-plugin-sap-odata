@@ -1,0 +1,56 @@
+{
+    "meta": {
+        "label": "SAP OData",
+        "description": "Import data from a SAP/OData account",
+        "icon": "icon-list"
+    },
+    "readable": true,
+    "writable": false,
+    "params": [
+        {
+            "name": "auth_type",
+            "label": "Type of authentication",
+            "type": "SELECT",
+            "selectChoices": [
+                {
+                    "value": "login",
+                    "label": "User name / password"
+                },
+                {
+                    "value": "oauth",
+                    "label": "Single Sign On"
+                }
+            ]
+        },
+        {
+            "name": "sap-odata_oauth",
+            "label": "Azure preset",
+            "type": "PRESET",
+            "parameterSetId": "oauth",
+            "visibilityCondition": "model.auth_type == 'oauth'"
+        },
+        {
+            "name": "sap-odata_login",
+            "label": "OData preset",
+            "type": "PRESET",
+            "parameterSetId": "login",
+            "visibilityCondition": "model.auth_type == 'login'"
+        },
+        {
+            "name": "odata_service_node",
+            "label": "Service node",
+            "description": "",
+            "type": "STRING",
+            "defaultValue": "",
+            "mandatory": false
+        },
+        {
+            "name": "odata_list_title",
+            "label": "Entity",
+            "description": "",
+            "type": "STRING",
+            "defaultValue": "",
+            "mandatory": false
+        }
+    ]
+}
