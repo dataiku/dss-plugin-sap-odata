@@ -6,7 +6,7 @@
         "description": "Import data from your SAP account",
         "author": "Dataiku (Alex Bourret)",
         "icon": "icon-list",
-        "tags": ["SAP"],
+        "tags": ["Connector"],
         "url": "https://www.dataiku.com/product/plugins/sap-odata/",
         "licenseInfo": "Apache Software License",
         "supportLevel": "NOT_SUPPORTED"
