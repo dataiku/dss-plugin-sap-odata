@@ -55,11 +55,12 @@ class ODataClient():
         session = requests.Session()
         if self.ignore_ssl_check is True:
             session.verify = False
+        login_config = config.get(ODataConstants.LOGIN)
         if odata_version == ODataConstants.ODATA_VSAP:
-            self.sap_client = config[ODataConstants.LOGIN][ODataConstants.SAP_CLIENT]
+            self.sap_client = login_config.get(ODataConstants.SAP_CLIENT, "")
             session.auth = (
-                config[ODataConstants.LOGIN][ODataConstants.USERNAME],
-                config[ODataConstants.LOGIN][ODataConstants.PASSWORD]
+                login_config.get(ODataConstants.USERNAME, ""),
+                login_config.get(ODataConstants.PASSWORD, "")
             )
             session.head(
                 self.odata_instance,
@@ -71,8 +72,8 @@ class ODataClient():
             ODataConstants.USERNAME in config[ODataConstants.LOGIN] and \
                 ODataConstants.PASSWORD in config[ODataConstants.LOGIN]:
             session.auth = (
-                config[ODataConstants.LOGIN][ODataConstants.USERNAME],
-                config[ODataConstants.LOGIN][ODataConstants.PASSWORD]
+                login_config.get(ODataConstants.USERNAME, ""),
+                login_config.get(ODataConstants.PASSWORD, "")
             )
         return session
 
