@@ -77,8 +77,8 @@ class ODataClient():
             )
         return session
 
-    def get_entity_collections(self, entity, records_limit=None):
-        query_options = self.get_base_query_options()
+    def get_entity_collections(self, entity, top=None, skip=None):
+        query_options = self.get_base_query_options(top=top, skip=skip)
         url = self.odata_instance + '/' + entity.strip("/") + self.get_query_string(query_options)
         data = None
         while self._should_retry(data):
@@ -127,7 +127,7 @@ class ODataClient():
         headers["Authorization"] = self.get_authorization_bearer()
         return headers
 
-    def get_base_query_options(self, records_limit=None):
+    def get_base_query_options(self, top=None, skip=None, records_limit=None):
         if self.force_json and self.json_in_query_string:
             query_options = [DSSConstants.JSON_FORMAT]
         else:
@@ -136,6 +136,10 @@ class ODataClient():
             query_options.append(
                 ODataConstants.RECORD_LIMIT.format(records_limit)
             )
+        if skip:
+            query_options.append(ODataConstants.SKIP.format(skip))
+        if top:
+            query_options.append(ODataConstants.TOP.format(top))
         return query_options
 
     def format(self, item):
