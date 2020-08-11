@@ -2,6 +2,7 @@ from dataiku.connector import Connector
 import logging
 
 from odata_client import ODataClient
+from dss_constants import DSSConstants
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
@@ -58,9 +59,21 @@ class SAPODataConnector(Connector):
 
         The dataset schema and partitioning are given for information purpose.
         """
-        items = self.client.get_entity_collections(self.odata_list_title, records_limit=records_limit)
-        for item in items:
-            yield self.clean(item)
+        skip = 0
+        bulk_size = DSSConstants.BULK_SIZE
+        if records_limit > 0:
+            bulk_size = records_limit if records_limit < bulk_size else bulk_size
+        items = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip)
+        while items:
+            for item in items:
+                yield self.clean(item)
+            skip = skip + bulk_size
+            if records_limit > 0:
+                if skip >= records_limit:
+                    break
+                if skip + bulk_size > records_limit:
+                    bulk_size = records_limit - skip
+            items = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip)
 
     def clean(self, item):
         for key in self.KEYS_TO_REMOVE:
