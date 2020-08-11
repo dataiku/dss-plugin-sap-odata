@@ -3,3 +3,4 @@ class DSSConstants(object):
     AUTHORISATION_BEARER = "Bearer {}"
     JSON_FORMAT = "$format=json"
     CONTENT_TYPE = "application/json;odata=verbose"
+    BULK_SIZE = 100
