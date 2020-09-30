@@ -2,6 +2,7 @@ import requests
 import logging
 from odata_constants import ODataConstants
 from dss_constants import DSSConstants
+from dataikuapi.utils import DataikuException
 from time import sleep
 
 logger = logging.getLogger(__name__)
@@ -78,6 +79,8 @@ class ODataClient():
         return session
 
     def get_entity_collections(self, entity, top=None, skip=None):
+        if self.odata_list_title is None or self.odata_list_title == "":
+            top = None  # SAP will complain if $top is present in a request to list entities
         query_options = self.get_base_query_options(top=top, skip=skip)
         url = self.odata_instance + '/' + entity.strip("/") + self.get_query_string(query_options)
         data = None
@@ -101,10 +104,10 @@ class ODataClient():
                     return True
                 else:
                     logging.error("Remote service error : {}. Attempt {}, stop trying.".format(data["error"]["message"]["value"], self.retries))
-                    raise Exception("Remote service error : {}".format(data["error"]["message"]["value"]))
+                    raise DataikuException("Remote service error : {}".format(data["error"]["message"]["value"]))
             else:
                 logging.error("Remote service error")
-                raise Exception("Remote service error")
+                raise DataikuException("Remote service error")
         return False
 
     def get(self, url, headers={}):
@@ -114,6 +117,7 @@ class ODataClient():
         }
         if self.ignore_ssl_check is True:
             args["verify"] = False
+        logger.info("Accessing endpoint {}".format(url))
         try:
             ret = self.session.get(url, **args)
             return ret
@@ -173,8 +177,8 @@ class ODataClient():
     def assert_response(self, response):
         status_code = response.status_code
         if status_code == 404:
-            raise Exception("This entity does not exist")
+            raise DataikuException("This entity does not exist")
         if status_code == 403:
-            raise Exception("{}".format(response))
+            raise DataikuException("{}".format(response))
         if status_code == 401:
-            raise Exception("Forbidden access")
+            raise DataikuException("Forbidden access")
