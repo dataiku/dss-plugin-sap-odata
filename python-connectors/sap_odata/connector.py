@@ -1,8 +1,8 @@
 from dataiku.connector import Connector
+from dataikuapi.utils import DataikuException
 import logging
 
 from odata_client import ODataClient
-from dss_constants import DSSConstants
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
@@ -23,6 +23,7 @@ class SAPODataConnector(Connector):
         """
         Connector.__init__(self, config, plugin_config)
         self.odata_list_title = self.config.get("odata_list_title")
+        self.bulk_size = config.get("bulk_size", 10000)
         self.client = ODataClient(config)
         # According to https://www.odata.org/documentation/odata-version-2-0/uri-conventions/
         # https://services.odata.org/OData/OData.svc/Category(1)/Products?$top=2&$orderby=name
@@ -60,7 +61,7 @@ class SAPODataConnector(Connector):
         The dataset schema and partitioning are given for information purpose.
         """
         skip = 0
-        bulk_size = DSSConstants.BULK_SIZE
+        bulk_size = self.bulk_size
         if records_limit > 0:
             bulk_size = records_limit if records_limit < bulk_size else bulk_size
         items = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip)
@@ -100,13 +101,13 @@ class SAPODataConnector(Connector):
 
         Note: the writer is responsible for clearing the partition, if relevant.
         """
-        raise Exception("Unimplemented")
+        raise DataikuException("Unimplemented")
 
     def get_partitioning(self):
         """
         Return the partitioning schema that the connector defines.
         """
-        raise Exception("Unimplemented")
+        raise DataikuException("Unimplemented")
 
     def list_partitions(self, partitioning):
         """Return the list of partitions for the partitioning scheme
@@ -119,7 +120,7 @@ class SAPODataConnector(Connector):
         Implementation is only required if the corresponding flag is set to True
         in the connector definition
         """
-        raise Exception("unimplemented")
+        raise DataikuException("unimplemented")
 
     def get_records_count(self, partitioning=None, partition_id=None):
         """
@@ -128,4 +129,4 @@ class SAPODataConnector(Connector):
         Implementation is only required if the corresponding flag is set to True
         in the connector definition
         """
-        raise Exception("unimplemented")
+        raise DataikuException("unimplemented")

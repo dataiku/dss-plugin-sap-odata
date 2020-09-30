@@ -11,23 +11,14 @@
             "name": "auth_type",
             "label": "Type of authentication",
             "type": "SELECT",
+            "defaultValue": "login",
+            "visibilityCondition": false,
             "selectChoices": [
                 {
                     "value": "login",
                     "label": "User name / password"
-                },
-                {
-                    "value": "oauth",
-                    "label": "Single Sign On"
                 }
             ]
-        },
-        {
-            "name": "sap-odata_oauth",
-            "label": "Azure preset",
-            "type": "PRESET",
-            "parameterSetId": "oauth",
-            "visibilityCondition": "model.auth_type == 'oauth'"
         },
         {
             "name": "sap-odata_login",
@@ -51,6 +42,21 @@
             "type": "STRING",
             "defaultValue": "",
             "mandatory": false
+        },
+        {
+            "name": "show_advanced_parameters",
+            "label": "Show advanced parameters",
+            "description": "",
+            "type": "BOOLEAN",
+            "defaultValue": false
+        },
+        {
+            "name": "bulk_size",
+            "label": "Bulk size",
+            "description": "",
+            "type": "INT",
+            "defaultValue": 10000,
+            "visibilityCondition": "model.show_advanced_parameters == true"
         }
     ]
 }
