@@ -8,6 +8,10 @@
     "writable": false,
     "params": [
         {
+            "label": "Authentication",
+            "type": "SEPARATOR"
+        },
+        {
             "name": "auth_type",
             "label": "Type of authentication",
             "type": "SELECT",
@@ -26,6 +30,10 @@
             "type": "PRESET",
             "parameterSetId": "login",
             "visibilityCondition": "model.auth_type == 'login'"
+        },
+        {
+            "label": "Data to retrieve",
+            "type": "SEPARATOR"
         },
         {
             "name": "odata_service_node",
@@ -49,6 +57,11 @@
             "description": "",
             "type": "BOOLEAN",
             "defaultValue": false
+        },
+        {
+            "label": "Advanced parameters",
+            "type": "SEPARATOR",
+            "visibilityCondition": "model.show_advanced_parameters == true"
         },
         {
             "name": "bulk_size",
