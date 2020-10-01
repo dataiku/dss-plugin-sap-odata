@@ -36,22 +36,11 @@
             "label": "OData protocol version",
             "type": "SELECT",
             "defaultValue" : "sap",
+            "visibilityCondition": false,
             "selectChoices": [
                 {
                     "value": "sap",
                     "label": "SAP OData"
-                },
-                {
-                    "value": "v2",
-                    "label": "Version 2"
-                },
-                {
-                    "value": "v3",
-                    "label": "Version 3"
-                },
-                {
-                    "value": "v4",
-                    "label": "Version 4"
                 }
             ]
         },
