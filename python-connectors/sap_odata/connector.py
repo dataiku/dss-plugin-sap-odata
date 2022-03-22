@@ -1,6 +1,7 @@
 from dataiku.connector import Connector
 from dataikuapi.utils import DataikuException
 import logging
+import json
 
 from odata_client import ODataClient
 
@@ -80,6 +81,10 @@ class SAPODataConnector(Connector):
         for key in self.KEYS_TO_REMOVE:
             if key in item:
                 del item[key]
+        for key in item:
+            value = item.get(key)
+            if isinstance(value, dict):
+                item[key] = json.dumps(value)
         return item
 
     def get_schema_set(self, set_name):
