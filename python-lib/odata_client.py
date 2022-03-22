@@ -78,17 +78,19 @@ class ODataClient():
             )
         return session
 
-    def get_entity_collections(self, entity, top=None, skip=None):
+    def get_entity_collections(self, entity, top=None, skip=None, page_url=None):
         if self.odata_list_title is None or self.odata_list_title == "":
             top = None  # SAP will complain if $top is present in a request to list entities
         query_options = self.get_base_query_options(top=top, skip=skip)
-        url = self.odata_instance + '/' + entity.strip("/") + self.get_query_string(query_options)
+        url = page_url if page_url else self.odata_instance + '/' + entity.strip("/") + self.get_query_string(query_options)
         data = None
         while self._should_retry(data):
             response = self.get(url)
             self.assert_response(response)
             data = response.json()
-        return self.format(data[self.data_container])
+        next_page_url = data.get(ODataConstants.NEXT_LINK, None)
+        items = data.get(ODataConstants.DATA_CONTAINER_V4, data.get(ODataConstants.DATA_CONTAINER_V2, []))
+        return self.format(items), next_page_url
 
     def _should_retry(self, data):
         if data is None:

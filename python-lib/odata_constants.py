@@ -21,3 +21,4 @@ class ODataConstants(object):
     TOP = "$top={}"
     SKIP = "$skip={}"
     SERVICE_NODE = "odata_service_node"
+    NEXT_LINK = "@odata.nextLink"

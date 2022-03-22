@@ -64,7 +64,7 @@ class SAPODataConnector(Connector):
         bulk_size = self.bulk_size
         if records_limit > 0:
             bulk_size = records_limit if records_limit < bulk_size else bulk_size
-        items = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip)
+        items, next_page_url = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip)
         while items:
             for item in items:
                 yield self.clean(item)
@@ -74,7 +74,7 @@ class SAPODataConnector(Connector):
                     break
                 if skip + bulk_size > records_limit:
                     bulk_size = records_limit - skip
-            items = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip)
+            items, next_page_url = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip, page_url=next_page_url)
 
     def clean(self, item):
         for key in self.KEYS_TO_REMOVE:
