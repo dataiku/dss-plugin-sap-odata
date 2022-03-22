@@ -68,7 +68,7 @@
             "label": "Bulk size",
             "description": "",
             "type": "INT",
-            "defaultValue": 10000,
+            "defaultValue": 1000,
             "visibilityCondition": "model.show_advanced_parameters == true"
         }
     ]
