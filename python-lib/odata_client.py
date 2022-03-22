@@ -89,8 +89,8 @@ class ODataClient():
             self.assert_response(response)
             data = response.json()
         next_page_url = data.get(ODataConstants.NEXT_LINK, None)
-        items = data.get(ODataConstants.DATA_CONTAINER_V4, data.get(ODataConstants.DATA_CONTAINER_V2, []))
-        return self.format(items), next_page_url
+        item = data.get(ODataConstants.DATA_CONTAINER_V4, data.get(ODataConstants.DATA_CONTAINER_V2, {}))
+        return self.format(item), next_page_url
 
     def _should_retry(self, data):
         if data is None:

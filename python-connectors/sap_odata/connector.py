@@ -23,7 +23,7 @@ class SAPODataConnector(Connector):
         """
         Connector.__init__(self, config, plugin_config)
         self.odata_list_title = self.config.get("odata_list_title")
-        self.bulk_size = config.get("bulk_size", 10000)
+        self.bulk_size = config.get("bulk_size", 1000)
         self.client = ODataClient(config)
         # According to https://www.odata.org/documentation/odata-version-2-0/uri-conventions/
         # https://services.odata.org/OData/OData.svc/Category(1)/Products?$top=2&$orderby=name
