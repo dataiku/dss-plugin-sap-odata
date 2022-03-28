@@ -1,6 +1,7 @@
 from dataiku.connector import Connector
 from dataikuapi.utils import DataikuException
 import logging
+import json
 
 from odata_client import ODataClient
 
@@ -23,7 +24,7 @@ class SAPODataConnector(Connector):
         """
         Connector.__init__(self, config, plugin_config)
         self.odata_list_title = self.config.get("odata_list_title")
-        self.bulk_size = config.get("bulk_size", 10000)
+        self.bulk_size = config.get("bulk_size", 1000)
         self.client = ODataClient(config)
         # According to https://www.odata.org/documentation/odata-version-2-0/uri-conventions/
         # https://services.odata.org/OData/OData.svc/Category(1)/Products?$top=2&$orderby=name
@@ -64,7 +65,7 @@ class SAPODataConnector(Connector):
         bulk_size = self.bulk_size
         if records_limit > 0:
             bulk_size = records_limit if records_limit < bulk_size else bulk_size
-        items = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip)
+        items, next_page_url = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip)
         while items:
             for item in items:
                 yield self.clean(item)
@@ -74,12 +75,16 @@ class SAPODataConnector(Connector):
                     break
                 if skip + bulk_size > records_limit:
                     bulk_size = records_limit - skip
-            items = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip)
+            items, next_page_url = self.client.get_entity_collections(self.odata_list_title, top=bulk_size, skip=skip, page_url=next_page_url)
 
     def clean(self, item):
         for key in self.KEYS_TO_REMOVE:
             if key in item:
                 del item[key]
+        for key in item:
+            value = item.get(key)
+            if isinstance(value, dict):
+                item[key] = json.dumps(value)
         return item
 
     def get_schema_set(self, set_name):
