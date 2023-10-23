@@ -1,6 +1,6 @@
 {
     "id": "sap-odata",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "meta": {
         "label": "SAP OData",
         "description": "Import data from your SAP account",
