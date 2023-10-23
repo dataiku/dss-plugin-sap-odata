@@ -73,6 +73,14 @@
             "mandatory": false
         },
         {
+            "name": "should_convert_date",
+            "label": " ",
+            "description": "Convert date",
+            "type": "BOOLEAN",
+            "defaultValue": true,
+            "visibilityCondition": "model.show_advanced_parameters == true"
+        },
+        {
             "name": "bulk_size",
             "label": " ",
             "description": "Bulk size",
