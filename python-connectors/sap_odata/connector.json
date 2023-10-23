@@ -53,8 +53,8 @@
         },
         {
             "name": "show_advanced_parameters",
-            "label": "Show advanced parameters",
-            "description": "",
+            "label": " ",
+            "description": "Show advanced parameters",
             "type": "BOOLEAN",
             "defaultValue": false
         },
@@ -64,9 +64,18 @@
             "visibilityCondition": "model.show_advanced_parameters == true"
         },
         {
-            "name": "bulk_size",
-            "label": "Bulk size",
+            "name": "odata_filter_query",
+            "label": "Filter query",
             "description": "",
+            "type": "STRING",
+            "defaultValue": "",
+            "visibilityCondition": "model.show_advanced_parameters == true",
+            "mandatory": false
+        },
+        {
+            "name": "bulk_size",
+            "label": " ",
+            "description": "Bulk size",
             "type": "INT",
             "defaultValue": 1000,
             "visibilityCondition": "model.show_advanced_parameters == true"

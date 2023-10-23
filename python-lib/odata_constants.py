@@ -4,6 +4,7 @@ class ODataConstants(object):
     DATA_CONTAINER_V2 = "d"
     DATA_RESULTS = "results"
     ENTITYSETS = "EntitySets"
+    FILTER = "$filter={}"
     INSTANCE = "odata_instance"
     LIST_TITLE = "odata_list_title"
     LOGIN = "sap-odata_login"
