@@ -16,11 +16,15 @@
             "label": "Type of authentication",
             "type": "SELECT",
             "defaultValue": "login",
-            "visibilityCondition": false,
+            "visibilityCondition": true,
             "selectChoices": [
                 {
+                    "value": "user-account",
+                    "label": "Personal user account"
+                },
+                {
                     "value": "login",
-                    "label": "User name / password"
+                    "label": "Service account"
                 }
             ]
         },
@@ -32,12 +36,19 @@
             "visibilityCondition": "model.auth_type == 'login'"
         },
         {
+            "name": "sap-odata_user-account",
+            "label": "Personal user account",
+            "type": "PRESET",
+            "parameterSetId": "user-accounts",
+            "visibilityCondition": "model.auth_type == 'user-account'"
+        },
+        {
             "label": "Data to retrieve",
             "type": "SEPARATOR"
         },
         {
             "name": "odata_service_node",
-            "label": "Service node",
+            "label": "Service name",
             "description": "",
             "type": "STRING",
             "defaultValue": "",

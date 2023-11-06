@@ -1,11 +1,11 @@
 {
     "meta": {
-        "label": "Service accounts",
-        "description": "Create one preset per credential and SAP-OData server to access",
+        "label": "User accounts",
+        "description": "Create one preset per targeted SAP-OData server to access. Each Dataiku user can then enter their own credentials via their profile page.",
         "icon": "icon-list"
     },
-    "defaultDefinableInline": true,
-    "defaultDefinableAtProjectLevel": true,
+    "defaultDefinableInline": false,
+    "defaultDefinableAtProjectLevel": false,
     "pluginParams": [],
     "params": [
         {
@@ -29,7 +29,8 @@
             "label": "Ignore SSL check",
             "type": "BOOLEAN",
             "description": "",
-            "defaultValue": false
+            "defaultValue": false,
+            "visibilityCondition": false
         },
         {
             "name": "odata_version",
@@ -45,26 +46,20 @@
             ]
         },
         {
-            "name": "odata_username",
-            "label": "Username",
-            "type": "STRING",
-            "description": "",
-            "mandatory": false
-        },
-        {
-            "name": "odata_password",
-            "label": "Password",
-            "type": "PASSWORD",
-            "description": "",
-            "mandatory": false
-        },
-        {
             "name": "sap_client",
             "label": "Client",
             "type": "STRING",
             "description": "",
             "mandatory": false,
             "visibilityCondition": "model.odata_version == 'sap'"
+        },
+        {
+            "name": "username_password",
+            "type": "CREDENTIAL_REQUEST",
+            "label": "Username Password",
+            "credentialRequestSettings": {
+                "type": "BASIC"
+            }
         }
     ]
 }
