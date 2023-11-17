@@ -39,7 +39,7 @@
             "name": "sap-odata_user-account",
             "label": "Personal user account",
             "type": "PRESET",
-            "parameterSetId": "user-accounts",
+            "parameterSetId": "basic-auth",
             "visibilityCondition": "model.auth_type == 'user-account'"
         },
         {

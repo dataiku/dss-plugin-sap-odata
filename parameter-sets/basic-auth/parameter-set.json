@@ -1,6 +1,6 @@
 {
     "meta": {
-        "label": "User accounts",
+        "label": "Personal user accounts",
         "description": "Create one preset per targeted SAP-OData server to access. Each Dataiku user can then enter their own credentials via their profile page.",
         "icon": "icon-list"
     },
