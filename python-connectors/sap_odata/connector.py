@@ -1,7 +1,7 @@
 from dataiku.connector import Connector
 from dataikuapi.utils import DataikuException
 from odata_client import ODataClient
-from odata_common import get_clean_row_method
+from odata_common import get_clean_row_method, get_list_title
 import logging
 
 
@@ -21,7 +21,8 @@ class SAPODataConnector(Connector):
         object 'plugin_config' to the constructor
         """
         Connector.__init__(self, config, plugin_config)
-        self.odata_list_title = self.config.get("odata_list_title")
+        logger.info("Starting SAP-OData v1.0.3")
+        self.odata_list_title = get_list_title(config)
         self.bulk_size = config.get("bulk_size", 1000)
         self.odata_filter_query = ""
 

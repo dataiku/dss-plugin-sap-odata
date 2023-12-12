@@ -6,6 +6,8 @@
     },
     "readable": true,
     "writable": false,
+    "kind": "PYTHON",
+    "paramsPythonSetup": "browse_odata.py",
     "params": [
         {
             "label": "Authentication",
@@ -47,19 +49,36 @@
             "type": "SEPARATOR"
         },
         {
-            "name": "odata_service_node",
+            "name": "odata_service_node_select",
             "label": "Service name",
+            "description": "",
+            "type": "SELECT",
+            "defaultValue": "_dku_manual_select",
+            "getChoicesFromPython": true
+        },
+        {
+            "name": "odata_service_node",
+            "label": " ",
             "description": "",
             "type": "STRING",
             "defaultValue": "",
+            "visibilityCondition": "model.odata_service_node_select == '_dku_manual_select'",
             "mandatory": false
         },
         {
-            "name": "odata_list_title",
+            "name": "odata_list_selector",
             "label": "Entity",
+            "description": "",
+            "type": "SELECT",
+            "getChoicesFromPython": true
+        },
+        {
+            "name": "odata_list_title",
+            "label": " ",
             "description": "",
             "type": "STRING",
             "defaultValue": "",
+            "visibilityCondition": "model.odata_list_selector == '_dku_manual_select'",
             "mandatory": false
         },
         {
