@@ -73,6 +73,20 @@
             "mandatory": false
         },
         {
+            "name": "filter_separator",
+            "type": "SEPARATOR",
+            "visibilityCondition": "model.show_advanced_parameters == true",
+            "label": "",
+            "description": "[Link to SAP filter query documentation](https://help.sap.com/docs/SAP_IoT/fffd6ca18e374c2e80688dab5c31527f/075e41f5538c4a6fa1176db1ba03f602.html)"
+        },
+        {
+            "name": "filter_space_separator",
+            "type": "SEPARATOR",
+            "visibilityCondition": "model.show_advanced_parameters == true",
+            "label": " ",
+            "description": ""
+        },
+        {
             "name": "should_convert_date",
             "label": " ",
             "description": "Convert date",
