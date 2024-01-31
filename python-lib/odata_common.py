@@ -77,8 +77,7 @@ def get_odata_instance(config):
 
 
 def get_list_title(config):
-    odata_list_title = None
-    odata_list_title = config.get("odata_list_selector")
+    odata_list_title = config.get("odata_list_selector", None)
     if odata_list_title == ODataConstants.UI_MANUAL_SELECT:
         odata_list_title = config.get(ODataConstants.LIST_TITLE)
     return odata_list_title
@@ -112,12 +111,7 @@ class DSSSelectorChoices(object):
         if isinstance(choices, list):
             return {"choices": choices}
         if isinstance(choices, dict):
-            returned_choices = []
-            for choice_key in choices:
-                returned_choices.append({
-                    "label": choice_key,
-                    "value": choices.get(choice_key)
-                })
+            return [{"label": choice_key, "value": choices.get(choice_key)} for choice_key in choices]
 
     def text_message(self, text_message):
         return self._build_select_choices(text_message)

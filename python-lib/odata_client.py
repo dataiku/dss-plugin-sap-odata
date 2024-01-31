@@ -84,8 +84,7 @@ class ODataClient():
             )
         return session
 
-    def get_entity_collections(self, entity, top=None, skip=None, page_url=None, filter=None):
-        entity = entity or ""
+    def get_entity_collections(self, entity="", top=None, skip=None, page_url=None, filter=None):
         if self.odata_list_title is None or self.odata_list_title == "":
             top = None  # SAP will complain if $top is present in a request to list entities
         query_options = self.get_base_query_options(top=top, skip=skip, filter=filter)

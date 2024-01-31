@@ -6,7 +6,7 @@ def get_odata_list_selector(payload, config, plugin_config, inputs):
     choices = DSSSelectorChoices()
     client = ODataClient(config)
     items, _ = client.get_entity_collections(
-        ""
+        entity=""
     )
     choices.append_manual_select()
     for item in items:
