@@ -6,6 +6,8 @@
     },
     "readable": true,
     "writable": false,
+    "kind": "PYTHON",
+    "paramsPythonSetup": "browse_odata.py",
     "params": [
         {
             "label": "Authentication",
@@ -16,11 +18,15 @@
             "label": "Type of authentication",
             "type": "SELECT",
             "defaultValue": "login",
-            "visibilityCondition": false,
+            "visibilityCondition": true,
             "selectChoices": [
                 {
+                    "value": "user-account",
+                    "label": "Personal user account"
+                },
+                {
                     "value": "login",
-                    "label": "User name / password"
+                    "label": "Service account"
                 }
             ]
         },
@@ -32,29 +38,53 @@
             "visibilityCondition": "model.auth_type == 'login'"
         },
         {
+            "name": "sap-odata_user-account",
+            "label": "Personal user account",
+            "type": "PRESET",
+            "parameterSetId": "basic-auth",
+            "visibilityCondition": "model.auth_type == 'user-account'"
+        },
+        {
             "label": "Data to retrieve",
             "type": "SEPARATOR"
         },
         {
+            "name": "odata_service_node_select",
+            "label": "Service name",
+            "description": "",
+            "type": "SELECT",
+            "defaultValue": "_dku_manual_select",
+            "getChoicesFromPython": true
+        },
+        {
             "name": "odata_service_node",
-            "label": "Service node",
+            "label": " ",
             "description": "",
             "type": "STRING",
             "defaultValue": "",
+            "visibilityCondition": "model.odata_service_node_select == '_dku_manual_select'",
             "mandatory": false
         },
         {
-            "name": "odata_list_title",
+            "name": "odata_list_selector",
             "label": "Entity",
+            "description": "",
+            "type": "SELECT",
+            "getChoicesFromPython": true
+        },
+        {
+            "name": "odata_list_title",
+            "label": " ",
             "description": "",
             "type": "STRING",
             "defaultValue": "",
+            "visibilityCondition": "model.odata_list_selector == '_dku_manual_select'",
             "mandatory": false
         },
         {
             "name": "show_advanced_parameters",
-            "label": "Show advanced parameters",
-            "description": "",
+            "label": " ",
+            "description": "Show advanced parameters",
             "type": "BOOLEAN",
             "defaultValue": false
         },
@@ -64,9 +94,40 @@
             "visibilityCondition": "model.show_advanced_parameters == true"
         },
         {
-            "name": "bulk_size",
-            "label": "Bulk size",
+            "name": "odata_filter_query",
+            "label": "Filter query",
             "description": "",
+            "type": "STRING",
+            "defaultValue": "",
+            "visibilityCondition": "model.show_advanced_parameters == true",
+            "mandatory": false
+        },
+        {
+            "name": "filter_separator",
+            "type": "SEPARATOR",
+            "visibilityCondition": "model.show_advanced_parameters == true",
+            "label": "",
+            "description": "[Link to SAP filter query documentation](https://help.sap.com/docs/SAP_IoT/fffd6ca18e374c2e80688dab5c31527f/075e41f5538c4a6fa1176db1ba03f602.html)"
+        },
+        {
+            "name": "filter_space_separator",
+            "type": "SEPARATOR",
+            "visibilityCondition": "model.show_advanced_parameters == true",
+            "label": " ",
+            "description": ""
+        },
+        {
+            "name": "should_convert_date",
+            "label": " ",
+            "description": "Convert date",
+            "type": "BOOLEAN",
+            "defaultValue": true,
+            "visibilityCondition": "model.show_advanced_parameters == true"
+        },
+        {
+            "name": "bulk_size",
+            "label": " ",
+            "description": "Bulk size",
             "type": "INT",
             "defaultValue": 1000,
             "visibilityCondition": "model.show_advanced_parameters == true"
