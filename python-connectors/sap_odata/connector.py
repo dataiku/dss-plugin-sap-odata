@@ -1,7 +1,7 @@
 from dataiku.connector import Connector
 from dataikuapi.utils import DataikuException
 from odata_client import ODataClient
-from odata_common import get_clean_row_method
+from odata_common import get_clean_row_method, get_list_title
 import logging
 
 
@@ -21,7 +21,8 @@ class SAPODataConnector(Connector):
         object 'plugin_config' to the constructor
         """
         Connector.__init__(self, config, plugin_config)
-        self.odata_list_title = self.config.get("odata_list_title")
+        logger.info("Starting SAP-OData v1.0.3")
+        self.odata_list_title = get_list_title(config)
         self.bulk_size = config.get("bulk_size", 1000)
         self.odata_filter_query = ""
 
@@ -70,7 +71,7 @@ class SAPODataConnector(Connector):
         if records_limit > 0:
             bulk_size = records_limit if records_limit < bulk_size else bulk_size
         items, next_page_url = self.client.get_entity_collections(
-            self.odata_list_title,
+            entity=self.odata_list_title,
             top=bulk_size,
             skip=skip,
             filter=self.odata_filter_query
@@ -85,7 +86,7 @@ class SAPODataConnector(Connector):
                 if skip + bulk_size > records_limit:
                     bulk_size = records_limit - skip
             items, next_page_url = self.client.get_entity_collections(
-                self.odata_list_title, top=bulk_size, skip=skip,
+                entity=self.odata_list_title, top=bulk_size, skip=skip,
                 page_url=next_page_url, filter=self.odata_filter_query
             )
 

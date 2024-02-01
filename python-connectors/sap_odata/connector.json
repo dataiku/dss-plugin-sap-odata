@@ -6,6 +6,8 @@
     },
     "readable": true,
     "writable": false,
+    "kind": "PYTHON",
+    "paramsPythonSetup": "browse_odata.py",
     "params": [
         {
             "label": "Authentication",
@@ -16,11 +18,15 @@
             "label": "Type of authentication",
             "type": "SELECT",
             "defaultValue": "login",
-            "visibilityCondition": false,
+            "visibilityCondition": true,
             "selectChoices": [
                 {
+                    "value": "user-account",
+                    "label": "Personal user account"
+                },
+                {
                     "value": "login",
-                    "label": "User name / password"
+                    "label": "Service account"
                 }
             ]
         },
@@ -32,23 +38,47 @@
             "visibilityCondition": "model.auth_type == 'login'"
         },
         {
+            "name": "sap-odata_user-account",
+            "label": "Personal user account",
+            "type": "PRESET",
+            "parameterSetId": "basic-auth",
+            "visibilityCondition": "model.auth_type == 'user-account'"
+        },
+        {
             "label": "Data to retrieve",
             "type": "SEPARATOR"
         },
         {
+            "name": "odata_service_node_select",
+            "label": "Service name",
+            "description": "",
+            "type": "SELECT",
+            "defaultValue": "_dku_manual_select",
+            "getChoicesFromPython": true
+        },
+        {
             "name": "odata_service_node",
-            "label": "Service node",
+            "label": " ",
             "description": "",
             "type": "STRING",
             "defaultValue": "",
+            "visibilityCondition": "model.odata_service_node_select == '_dku_manual_select'",
             "mandatory": false
         },
         {
-            "name": "odata_list_title",
+            "name": "odata_list_selector",
             "label": "Entity",
+            "description": "",
+            "type": "SELECT",
+            "getChoicesFromPython": true
+        },
+        {
+            "name": "odata_list_title",
+            "label": " ",
             "description": "",
             "type": "STRING",
             "defaultValue": "",
+            "visibilityCondition": "model.odata_list_selector == '_dku_manual_select'",
             "mandatory": false
         },
         {

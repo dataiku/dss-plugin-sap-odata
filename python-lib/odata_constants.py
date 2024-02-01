@@ -21,5 +21,6 @@ class ODataConstants(object):
     SERVICE_NODE = "odata_service_node"
     SKIP = "$skip={}"
     TOP = "$top={}"
+    UI_MANUAL_SELECT = "_dku_manual_select"
     USERNAME = "odata_username"
     VERSION = "odata_version"
