@@ -2,6 +2,7 @@ import requests
 import logging
 from odata_constants import ODataConstants
 from dss_constants import DSSConstants
+from odata_common import get_odata_instance, get_list_title, get_login
 from dataikuapi.utils import DataikuException
 from time import sleep
 
@@ -16,15 +17,13 @@ class ODataClient():
 
     def __init__(self, config):
         self.auth_type = config.get(DSSConstants.AUTH_TYPE)
-        login = config.get('sap-odata_{}'.format(self.auth_type))
-        self.odata_service_node = config.get(ODataConstants.SERVICE_NODE).strip("/")
-        if self.odata_service_node != "":
-            self.odata_instance = "/".join([login[ODataConstants.INSTANCE].strip("/"), self.odata_service_node])
-        else:
-            self.odata_instance = login[ODataConstants.INSTANCE].strip("/")
-        self.ignore_ssl_check = login["ignore_ssl_check"]
-        self.odata_list_title = config.get(ODataConstants.LIST_TITLE)
-        odata_version = login[ODataConstants.VERSION]
+        login = get_login(config)
+        if not login:
+            raise Exception("Select a valid preset")
+        self.odata_instance = get_odata_instance(config)
+        self.ignore_ssl_check = login.get("ignore_ssl_check", False)
+        self.odata_list_title = get_list_title(config)
+        odata_version = login.get(ODataConstants.VERSION)
         self.set_odata_protocol_version(odata_version)
 
         if "sap-odata_oauth" in config and ODataConstants.OAUTH in config["sap-odata_oauth"]:
@@ -85,7 +84,7 @@ class ODataClient():
             )
         return session
 
-    def get_entity_collections(self, entity, top=None, skip=None, page_url=None, filter=None):
+    def get_entity_collections(self, entity="", top=None, skip=None, page_url=None, filter=None):
         if self.odata_list_title is None or self.odata_list_title == "":
             top = None  # SAP will complain if $top is present in a request to list entities
         query_options = self.get_base_query_options(top=top, skip=skip, filter=filter)

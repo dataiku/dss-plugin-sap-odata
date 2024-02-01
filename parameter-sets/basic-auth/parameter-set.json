@@ -60,6 +60,17 @@
             "credentialRequestSettings": {
                 "type": "BASIC"
             }
+        },
+        {
+            "name": "services_separator",
+            "label": "Services",
+            "type": "SEPARATOR"
+        },
+        {
+            "name": "service_names",
+            "label": "Service names",
+            "description": "Service name -> Human readable description",
+            "type": "MAP"
         }
     ]
 }
