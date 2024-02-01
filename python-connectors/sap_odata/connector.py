@@ -1,9 +1,9 @@
 from dataiku.connector import Connector
 from dataikuapi.utils import DataikuException
-import logging
-import json
-
 from odata_client import ODataClient
+from odata_common import get_clean_row_method, get_list_title
+import logging
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
@@ -11,8 +11,6 @@ logging.basicConfig(level=logging.INFO,
 
 
 class SAPODataConnector(Connector):
-
-    KEYS_TO_REMOVE = ["__metadata", "odata.type"]
 
     def __init__(self, config, plugin_config):
         """
@@ -23,11 +21,15 @@ class SAPODataConnector(Connector):
         object 'plugin_config' to the constructor
         """
         Connector.__init__(self, config, plugin_config)
-        self.odata_list_title = self.config.get("odata_list_title")
+        logger.info("Starting SAP-OData v1.0.3")
+        self.odata_list_title = get_list_title(config)
         self.bulk_size = config.get("bulk_size", 1000)
         self.odata_filter_query = ""
+
         if config.get("show_advanced_parameters", False):
             self.odata_filter_query = config.get("odata_filter_query", "")
+
+        self.clean_row = get_clean_row_method(config)
         self.client = ODataClient(config)
         # According to https://www.odata.org/documentation/odata-version-2-0/uri-conventions/
         # https://services.odata.org/OData/OData.svc/Category(1)/Products?$top=2&$orderby=name
@@ -69,14 +71,14 @@ class SAPODataConnector(Connector):
         if records_limit > 0:
             bulk_size = records_limit if records_limit < bulk_size else bulk_size
         items, next_page_url = self.client.get_entity_collections(
-            self.odata_list_title,
+            entity=self.odata_list_title,
             top=bulk_size,
             skip=skip,
             filter=self.odata_filter_query
         )
         while items:
             for item in items:
-                yield self.clean(item)
+                yield self.clean_row(item)
             skip = skip + bulk_size
             if records_limit > 0:
                 if skip >= records_limit:
@@ -84,19 +86,9 @@ class SAPODataConnector(Connector):
                 if skip + bulk_size > records_limit:
                     bulk_size = records_limit - skip
             items, next_page_url = self.client.get_entity_collections(
-                self.odata_list_title, top=bulk_size, skip=skip,
+                entity=self.odata_list_title, top=bulk_size, skip=skip,
                 page_url=next_page_url, filter=self.odata_filter_query
             )
-
-    def clean(self, item):
-        for key in self.KEYS_TO_REMOVE:
-            if key in item:
-                del item[key]
-        for key in item:
-            value = item.get(key)
-            if isinstance(value, dict):
-                item[key] = json.dumps(value)
-        return item
 
     def get_schema_set(self, set_name):
         for one_set in self.client.schema.entity_sets:
