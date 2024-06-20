@@ -53,7 +53,6 @@
             "label": "Service name",
             "description": "",
             "type": "SELECT",
-            "defaultValue": "_dku_manual_select",
             "getChoicesFromPython": true
         },
         {
@@ -108,6 +107,14 @@
             "visibilityCondition": "model.show_advanced_parameters == true",
             "label": "",
             "description": "[Link to SAP filter query documentation](https://help.sap.com/docs/SAP_IoT/fffd6ca18e374c2e80688dab5c31527f/075e41f5538c4a6fa1176db1ba03f602.html)"
+        },
+        {
+            "name": "odata_select_query",
+            "label": "Columns to retrieve",
+            "description": "",
+            "type": "STRINGS",
+            "visibilityCondition": "model.show_advanced_parameters == true",
+            "mandatory": false
         },
         {
             "name": "filter_space_separator",

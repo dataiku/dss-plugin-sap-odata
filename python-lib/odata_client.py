@@ -84,10 +84,10 @@ class ODataClient():
             )
         return session
 
-    def get_entity_collections(self, entity="", top=None, skip=None, page_url=None, filter=None):
+    def get_entity_collections(self, entity="", top=None, skip=None, page_url=None, filter=None, select=None):
         if self.odata_list_title is None or self.odata_list_title == "":
             top = None  # SAP will complain if $top is present in a request to list entities
-        query_options = self.get_base_query_options(top=top, skip=skip, filter=filter)
+        query_options = self.get_base_query_options(top=top, skip=skip, filter=filter, select=select)
         url = page_url if page_url else self.odata_instance + '/' + entity.strip("/") + self.get_query_string(query_options)
         data = None
         while self._should_retry(data):
@@ -139,7 +139,7 @@ class ODataClient():
         headers["Authorization"] = self.get_authorization_bearer()
         return headers
 
-    def get_base_query_options(self, top=None, skip=None, records_limit=None, filter=None):
+    def get_base_query_options(self, top=None, skip=None, records_limit=None, filter=None, select=None):
         if self.force_json and self.json_in_query_string:
             query_options = [DSSConstants.JSON_FORMAT]
         else:
@@ -154,6 +154,8 @@ class ODataClient():
             query_options.append(ODataConstants.TOP.format(top))
         if filter:
             query_options.append(ODataConstants.FILTER.format(filter))
+        if select:
+            query_options.append(ODataConstants.SELECT.format(select))
         return query_options
 
     def format(self, item):

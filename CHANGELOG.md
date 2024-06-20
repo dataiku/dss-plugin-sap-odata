@@ -1,5 +1,9 @@
 # Changelog
 
+## [Version 1.0.4](https://github.com/dataiku/dss-plugin-sap-odata/releases/tag/v1.0.3) - Feature - 2024-06-20
+
+- Add column selector
+
 ## [Version 1.0.3](https://github.com/dataiku/dss-plugin-sap-odata/releases/tag/v1.0.3) - Feature - 2023-10-20
 
 - Add filter field
