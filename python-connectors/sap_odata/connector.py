@@ -25,9 +25,11 @@ class SAPODataConnector(Connector):
         self.odata_list_title = get_list_title(config)
         self.bulk_size = config.get("bulk_size", 1000)
         self.odata_filter_query = ""
+        self.odata_select_query = []
 
         if config.get("show_advanced_parameters", False):
             self.odata_filter_query = config.get("odata_filter_query", "")
+            self.odata_select_query = ",".join(config.get("odata_select_query", []))
 
         self.clean_row = get_clean_row_method(config)
         self.client = ODataClient(config)
@@ -74,7 +76,8 @@ class SAPODataConnector(Connector):
             entity=self.odata_list_title,
             top=bulk_size,
             skip=skip,
-            filter=self.odata_filter_query
+            filter=self.odata_filter_query,
+            select=self.odata_select_query
         )
         while items:
             for item in items:
@@ -87,7 +90,7 @@ class SAPODataConnector(Connector):
                     bulk_size = records_limit - skip
             items, next_page_url = self.client.get_entity_collections(
                 entity=self.odata_list_title, top=bulk_size, skip=skip,
-                page_url=next_page_url, filter=self.odata_filter_query
+                page_url=next_page_url, filter=self.odata_filter_query, select=self.odata_select_query
             )
 
     def get_schema_set(self, set_name):

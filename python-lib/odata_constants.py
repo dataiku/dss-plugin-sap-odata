@@ -18,6 +18,7 @@ class ODataConstants(object):
     RECORD_LIMIT = "$top={}"
     SAP_CLIENT = "sap_client"
     SAP_CLIENT_HEADER = "sap-client"
+    SELECT = "$select={}"
     SERVICE_NODE = "odata_service_node"
     SKIP = "$skip={}"
     TOP = "$top={}"
