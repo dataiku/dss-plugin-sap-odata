@@ -21,7 +21,7 @@ class SAPODataConnector(Connector):
         object 'plugin_config' to the constructor
         """
         Connector.__init__(self, config, plugin_config)
-        logger.info("Starting SAP-OData v1.0.3")
+        logger.info("Starting SAP-OData v1.0.4")
         self.odata_list_title = get_list_title(config)
         self.bulk_size = config.get("bulk_size", 1000)
         self.odata_filter_query = ""
