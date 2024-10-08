@@ -94,7 +94,7 @@ class ODataClient():
             response = self.get(url)
             self.assert_response(response)
             data = response.json()
-        next_page_url = data.get(ODataConstants.NEXT_LINK, None)
+        next_page_url = data.get(ODataConstants.NEXT_LINK_SAP, data.get(ODataConstants.NEXT_LINK, None))
         item = data.get(ODataConstants.DATA_CONTAINER_V4, data.get(ODataConstants.DATA_CONTAINER_V2, {}))
         return self.format(item), next_page_url
 

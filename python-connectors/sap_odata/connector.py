@@ -1,7 +1,7 @@
 from dataiku.connector import Connector
 from dataikuapi.utils import DataikuException
 from odata_client import ODataClient
-from odata_common import get_clean_row_method, get_list_title
+from odata_common import get_clean_row_method, get_list_title, RecordsLimit, get_sap_mode
 import logging
 
 
@@ -21,10 +21,11 @@ class SAPODataConnector(Connector):
         object 'plugin_config' to the constructor
         """
         Connector.__init__(self, config, plugin_config)
-        logger.info("Starting SAP-OData v1.0.3")
+        logger.info("Starting SAP-OData v1.0.4-beta.2")
         self.odata_list_title = get_list_title(config)
         self.bulk_size = config.get("bulk_size", 1000)
         self.odata_filter_query = ""
+        self.sap_mode = get_sap_mode(config)
 
         if config.get("show_advanced_parameters", False):
             self.odata_filter_query = config.get("odata_filter_query", "")
@@ -66,10 +67,9 @@ class SAPODataConnector(Connector):
 
         The dataset schema and partitioning are given for information purpose.
         """
-        skip = 0
-        bulk_size = self.bulk_size
-        if records_limit > 0:
-            bulk_size = records_limit if records_limit < bulk_size else bulk_size
+        limit = RecordsLimit(records_limit=records_limit)
+        skip = None
+        bulk_size = self.get_bulk_size(records_limit=records_limit)
         items, next_page_url = self.client.get_entity_collections(
             entity=self.odata_list_title,
             top=bulk_size,
@@ -77,18 +77,39 @@ class SAPODataConnector(Connector):
             filter=self.odata_filter_query
         )
         while items:
+            number_of_items = len(items)
             for item in items:
                 yield self.clean_row(item)
-            skip = skip + bulk_size
-            if records_limit > 0:
-                if skip >= records_limit:
-                    break
-                if skip + bulk_size > records_limit:
-                    bulk_size = records_limit - skip
+                if limit.is_reached():
+                    logger.info("Limit is reached")
+                    return
+            if self.is_client_side_pagination():
+                if skip is None:
+                    skip = 0
+                skip = skip + number_of_items
+            else:
+                if not next_page_url:
+                    # Server side pagination with no next_page_url
+                    # -> time to quit
+                    return
             items, next_page_url = self.client.get_entity_collections(
                 entity=self.odata_list_title, top=bulk_size, skip=skip,
                 page_url=next_page_url, filter=self.odata_filter_query
             )
+
+    def get_bulk_size(self, records_limit=None):
+        if self.is_client_side_pagination():
+            if self.bulk_size == 0:
+                return None
+            bulk_size = self.bulk_size
+            if records_limit > 0:
+                bulk_size = records_limit if records_limit < bulk_size else bulk_size
+        else:
+            bulk_size = None
+        return bulk_size
+
+    def is_client_side_pagination(self):
+        return self.sap_mode == "cds"
 
     def get_schema_set(self, set_name):
         for one_set in self.client.schema.entity_sets:
