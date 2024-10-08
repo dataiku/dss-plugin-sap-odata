@@ -45,6 +45,22 @@
             ]
         },
         {
+            "name": "sap_mode",
+            "label": "SAP mode",
+            "type": "SELECT",
+            "defaultValue" : "cds",
+            "selectChoices": [
+                {
+                    "value": "cds",
+                    "label": "CDS"
+                },
+                {
+                    "value": "odp",
+                    "label": "ODP"
+                }
+            ]
+        },
+        {
             "name": "odata_username",
             "label": "Username",
             "type": "STRING",
