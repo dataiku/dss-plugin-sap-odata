@@ -84,7 +84,7 @@ class ODataClient():
             )
         return session
 
-    def get_entity_collections(self, entity="", top=None, skip=None, page_url=None, filter=None):
+    def get_entity_collections(self, entity="", top=None, skip=None, page_url=None, filter=None, can_raise=True):
         if entity is None:
             entity = ""
         if self.odata_list_title is None or self.odata_list_title == "":
@@ -93,8 +93,12 @@ class ODataClient():
         url = page_url if page_url else self.odata_instance + '/' + entity.strip("/") + self.get_query_string(query_options)
         data = None
         while self._should_retry(data):
+            logger.info("requests get url {}".format(url))
             response = self.get(url)
-            self.assert_response(response)
+            if self.assert_response_ok(response, can_raise=can_raise):
+                data = response.json()
+            else:
+                return {}, None
             data = response.json()
         next_page_url = data.get(ODataConstants.NEXT_LINK_SAP, data.get(ODataConstants.NEXT_LINK, None))
         item = data.get(ODataConstants.DATA_CONTAINER_V4, data.get(ODataConstants.DATA_CONTAINER_V2, {}))
@@ -186,11 +190,21 @@ class ODataClient():
         else:
             return ""
 
-    def assert_response(self, response):
+    def assert_response_ok(self, response, can_raise=True):
         status_code = response.status_code
+        return_code = True
         if status_code == 404:
-            raise DataikuException("This entity does not exist")
+            return_code = False
+            logger.error("Error 404, response={}".format(response.content))
+            if can_raise:
+                raise DataikuException("This entity does not exist")
         if status_code == 403:
             raise DataikuException("{}".format(response))
         if status_code == 401:
             raise DataikuException("Forbidden access")
+        if status_code == 400:
+            return_code = False
+            logger.error("Error 400, response={}".format(response.content))
+            if can_raise:
+                raise DataikuException("Error 400: {}".format(response))
+        return return_code

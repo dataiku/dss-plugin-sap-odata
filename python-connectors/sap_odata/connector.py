@@ -94,7 +94,7 @@ class SAPODataConnector(Connector):
                     return
             items, next_page_url = self.client.get_entity_collections(
                 entity=self.odata_list_title, top=bulk_size, skip=skip,
-                page_url=next_page_url, filter=self.odata_filter_query
+                page_url=next_page_url, filter=self.odata_filter_query, can_raise=False
             )
 
     def get_bulk_size(self, records_limit=None):
