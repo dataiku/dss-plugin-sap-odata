@@ -100,8 +100,9 @@ class ODataClient():
             else:
                 return {}, None
             data = response.json()
-        next_page_url = data.get(ODataConstants.NEXT_LINK_SAP, data.get(ODataConstants.NEXT_LINK, None))
+        next_page_url = data.get(ODataConstants.NEXT_LINK, None)
         item = data.get(ODataConstants.DATA_CONTAINER_V4, data.get(ODataConstants.DATA_CONTAINER_V2, {}))
+        next_page_url = item.get(ODataConstants.NEXT_LINK_SAP, next_page_url)
         return self.format(item), next_page_url
 
     def _should_retry(self, data):
