@@ -9,6 +9,7 @@ class ODataConstants(object):
     LIST_TITLE = "odata_list_title"
     LOGIN = "sap-odata_login"
     NEXT_LINK = "@odata.nextLink"
+    NEXT_LINK_SAP = "__next"
     OAUTH = "odata_oauth"
     ODATA_V2 = "v2"
     ODATA_V3 = "v3"
