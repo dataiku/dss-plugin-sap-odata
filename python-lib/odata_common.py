@@ -83,6 +83,13 @@ def get_list_title(config):
     return odata_list_title
 
 
+def get_sap_mode(config):
+    auth_type = config.get("auth_type", "login")
+    login_config = config.get(ODataConstants.LOGIN, {}) if auth_type == "login" else config.get("sap-odata_user-account", {})
+    sap_mode = login_config.get("sap_mode", "cds")
+    return sap_mode
+
+
 class DSSSelectorChoices(object):
     def __init__(self):
         self.choices = []
@@ -118,3 +125,16 @@ class DSSSelectorChoices(object):
 
     def to_dss(self):
         return self._build_select_choices(self.choices)
+
+
+class RecordsLimit():
+    def __init__(self, records_limit=-1):
+        self.has_no_limit = (records_limit == -1)
+        self.records_limit = records_limit
+        self.counter = 0
+
+    def increment_and_check_if_is_reached(self):
+        if self.has_no_limit:
+            return False
+        self.counter += 1
+        return self.counter > self.records_limit
