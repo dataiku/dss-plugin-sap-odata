@@ -21,7 +21,7 @@ class SAPODataConnector(Connector):
         object 'plugin_config' to the constructor
         """
         Connector.__init__(self, config, plugin_config)
-        logger.info("Starting SAP-OData v1.0.4-beta.3")
+        logger.info("Starting SAP-OData v1.0.4")
         self.odata_list_title = get_list_title(config)
         self.bulk_size = config.get("bulk_size", 1000)
         self.odata_filter_query = ""
@@ -80,7 +80,7 @@ class SAPODataConnector(Connector):
             number_of_items = len(items)
             for item in items:
                 yield self.clean_row(item)
-                if limit.is_reached():
+                if limit.increment_and_check_if_is_reached():
                     logger.info("Limit is reached")
                     return
             if self.is_client_side_pagination():

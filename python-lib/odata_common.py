@@ -133,7 +133,7 @@ class RecordsLimit():
         self.records_limit = records_limit
         self.counter = 0
 
-    def is_reached(self):
+    def increment_and_check_if_is_reached(self):
         if self.has_no_limit:
             return False
         self.counter += 1
